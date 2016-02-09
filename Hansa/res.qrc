@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/images">
+        <file>img/map.svg</file>
+    </qresource>
+</RCC>
