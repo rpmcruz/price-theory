@@ -7,6 +7,6 @@ Our mailing list: [price-theory@googlegroups.com](https://groups.google.com/d/fo
 
 See:
 
-1. [Game theory textbook](http://www.daviddfriedman.com/Academic/Price_Theory/PThy_ToC.html)
-2. [David Friedman's ideas for games](http://www.daviddfriedman.com/Living_Paper/living_paper.htm)
-3. [David Friedman's Hansa game](http://www.daviddfriedman.com/Living_Paper/Hansa/hansa_instructions/hansa_instructions.htm)
+1. [David D. Friedman's textbook](http://www.daviddfriedman.com/Academic/Price_Theory/PThy_ToC.html)
+2. [David D. Friedman's ideas for games](http://www.daviddfriedman.com/Living_Paper/living_paper.htm)
+3. [David D. Friedman's Hansa game](http://www.daviddfriedman.com/Living_Paper/Hansa/hansa_instructions/hansa_instructions.htm)
