@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Supermarket game</title>
+    <style>
+        .wrap { width: 700px; margin: 0 auto; }
+        canvas { border-style: solid; border-width: 1px; border-color: gray; }
+
+        p.text { line-height: 150%; margin-top: 60px; text-align: justify; }
+        input { vertical-align: middle; }
+    </style>
+</head>
+
+<body>
+
+<div class="wrap">
+<canvas id="mycanvas" width="700" height="200">
+Your browser does not support the HTML5 canvas tag.
+</canvas>
+
+<table>
+    <tr>
+        <td>Lines deviation:
+        <td><span id="dev">0</span></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Speed:
+        <td><input type="range" id="speed" min="0" max="3" value="0" onchange="speedChanged(this.value)" /></td>
+        <td><span id="vspeed">paused</span></td>
+    </tr>
+    <tr>
+        <td>Percentage of stupid:</td>
+        <td><input type="range" id="speed" min="0" max="10" value="0" onchange="stupidChanged(this.value)" /></td>
+        <td><span id="vstupid">0.0</span></td>
+    </tr>
+</table>
+
+<p class="text">Watch the impact of two different line search strategies. In the smart strategy, carts infer the time it will take from the length of the lines times numbers of groceries in the last cart of the line. In the dumb strategy (dash line), carts do not choose. If not many people are following &ldquo;dumb&rdquo; strategy, is this strategy really that dumb? Probably it is rational to consider that the searching time is not worth the pay off because lines should already be balanced out.</p>
+</div>
+
+<script src="utils.js"></script>
+<script>
+var canvas = document.getElementById('mycanvas');
+var ctx = canvas.getContext('2d');
+
+var queues = 5;
+var checkout_time = 10;  // per item;
+
+var queue_h = 40;  // 40*5 = 200
+var cart_w = 30;
+var cart_h = 15;
+
+var carts = [];
+var queue = new Array(queues);
+for(var i = 0; i < queues; i++)
+    queue[i] = [];
+var counter = 0;
+var stupid = 0;
+
+function Cart() {
+    this.n = Math.round(Math.max(5, gauss_rand(25, 10)));
+    var line = Math.floor((Math.random()*queues));
+    this.x = 2;
+    this.y = (line+0.5) * queue_h;
+    if(Math.random() < stupid)
+        this.target = this.dumb_strategy(line);
+    else
+        this.target = this.smart_strategy(line);
+    queue[this.target].push(this);
+    carts.push(this);
+}
+
+Cart.prototype.linetime = function(line) {
+    var l = queue[line].length;
+    if(l == 0)
+        return 0;
+    return l*queue[line][l-1].n;
+}
+
+Cart.prototype.smart_strategy = function(line) {
+    this.dumb = false;
+    var target = line;
+    var target_time = this.linetime(line);
+    for(var i = 0; i < queues; i++) {
+        var t = this.linetime(i);
+        var better = t < target_time;
+        if(t == target_time)
+            better = Math.abs(i-line) < Math.abs(target-line);
+        if(better) {
+            target = i;
+            target_time = t;
+        }
+    }
+    return target;
+};
+
+Cart.prototype.dumb_strategy = function(line) {
+    this.dumb = true;
+    return line;
+};
+
+Cart.prototype.update = function() {
+    var i = queue[this.target].indexOf(this);
+    var xvel = 5;
+    var yvel = 2;
+    var dx = (680 - i*(cart_w+10)) - this.x;
+    if(dx >= xvel)
+        this.x += xvel;
+    else if(i == 0)  // checkout !
+        if(counter % checkout_time == 0) {
+            this.n -= 1;
+            if(this.n < 0) {
+                queue[this.target].splice(i, 1);
+                return false;
+            }
+        }
+    var dy = (this.target+0.5)*queue_h - this.y;
+    if(Math.abs(dy) >= yvel)
+        this.y += yvel * Math.sign(dy);
+    return true;
+};
+
+Cart.prototype.draw = function(ctx) {
+    ctx.save();
+    ctx.fillStyle = 'white';
+    // cart
+    ctx.beginPath();
+    if(this.dumb)
+        ctx.setLineDash([2, 2]);
+    ctx.translate(this.x-cart_w/2, this.y-cart_h/2);
+    ctx.moveTo(3, 0);
+    ctx.lineTo(cart_w, 1.5);
+    ctx.lineTo(cart_w, cart_h-1.5);
+    ctx.lineTo(3, cart_h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // handle
+    ctx.beginPath();
+    ctx.moveTo(3, 1);
+    ctx.lineTo(0, 1);
+    ctx.lineTo(0, cart_h-1);
+    ctx.lineTo(3, cart_h-1);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = 'black';
+    ctx.fillText(this.n, cart_w/2, cart_h/2);
+    ctx.restore();
+}
+
+ctx.font='11px Arial';
+ctx.textBaseline = 'middle';
+ctx.textAlign = 'center';
+
+function mainloop() {
+    if(counter % 40 == 0)
+        new Cart();
+
+    // draw
+    for(var i = 0; i < queues; i++) {
+        ctx.fillStyle = i % 2 == 0 ? 'white' : '#eaeaea';
+        ctx.fillRect(0, i*queue_h, 700-cart_w-14, queue_h);
+    }
+
+    ctx.fillRect(700-cart_w-14, 0, cart_w+14, queues*queue_h);
+    ctx.beginPath();  // cashier line
+    ctx.lineWidth = 1;
+    ctx.moveTo(700-cart_w-14, 0);
+    ctx.lineTo(700-cart_w-14, 200);
+    ctx.stroke();
+
+    // update and draw
+    for(var i = carts.length-1; i >= 0; i--) {
+        if(carts[i].update())
+            carts[i].draw(ctx);
+        else
+            carts.splice(i, 1);
+    }
+
+    // information
+    /* It would be nicer to calculate deviation in one loop: using sum
+       and sum-squared, but we easily run into overflows in javascript. */
+    var avg = 0;
+    for(var i = 0; i < queues; i++)
+        for(var j = 0; j < queue[i].length; j++)
+            avg += queue[i][j].n / queues;
+    var dev = 0;
+    for(var i = 0; i < queues; i++)
+        for(var j = 0; j < queue[i].length; j++) {
+            n = queue[i][j].n - avg;
+            dev += n * (n / queues);
+        }
+    dev = Math.sqrt(dev);
+    document.getElementById('dev').innerHTML = dev.toFixed();
+
+    counter += 1;
+    if(wait > 0)
+        setTimeout(mainloop, wait);
+}
+
+var wait = 0;
+
+function speedChanged(value) {
+    if(wait == 0)
+        setTimeout(mainloop, wait);
+    var text;
+    switch(value) {
+        case '0': text = 'paused'; wait = 0; break;
+        case '1': text = 'slow'; wait = 150; break;
+        default: text = 'normal'; wait = 75; break;
+        case '3': text = 'fast'; wait = 25; break;
+    }
+    document.getElementById('vspeed').innerHTML = text;
+}
+
+function stupidChanged(value) {
+    stupid = value/10;
+    document.getElementById('vstupid').innerHTML = stupid.toFixed(1);
+}
+
+mainloop();
+</script>
+
+</body>
+</html>

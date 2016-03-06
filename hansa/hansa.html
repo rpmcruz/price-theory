@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hansa game</title>
+    <style>
+        /* layout */
+
+        .wrap { width: 700px; margin: 0 auto; }
+
+        .colcity { display: inline-block; width: 180px; vertical-align: top; }
+        .coltrade { display: inline-block; width: 330px; vertical-align: top; }
+        .centertrade { display: block; margin: 0 auto; width: 250px; }
+
+        /* city and trade fields */
+
+        p.citylabel { margin: 0 0 4px 0; font-weight: bold; }
+
+        /* city fields */
+
+        .label { padding-right: 4px; }
+        .value { border-style: solid; border-width: 2px; border-color: black; text-align: center; width: 100%; font-weight: bold; }
+        .maxvalue { color: gray; font-weight: normal; font-size: small; }
+        .showutility { border-style: solid; border-width: 2px; border-color: black; background-color: black; color: white; text-align: center; width: 100%; font-weight: bold; }
+        table { border-collapse: collapse; width: 100%; }
+        table td { padding: 0; }
+
+        /* trade fields */
+
+        input { width: 65%; height: 2ex; }
+        button { height: 3ex; vertical-align: middle; font-size: small; }
+        .linput0 { display: inline-block; width: 15%; text-align: left; }
+        .linput1 { display: inline-block; width: 15%; text-align: right; }
+        .proposebox { text-align: right; }
+        p.proposedesc { display: inline-block; font-size: small; margin: 0 0 0 0; vertical-align: middle; height: 100%; line-height: 90%; color: #424242; width: 8em; }
+
+        /* other fields */
+
+    	canvas { background: #979cab; margin-bottom: 20px; }
+        #turn { font-size: small; margin: 20px 0 60px 0; }
+        p.text { line-height: 150%; }
+    </style>
+</head>
+
+<body>
+
+<div class="wrap">
+<canvas id="mycanvas" width="700" height="275">
+Your browser does not support the HTML5 canvas tag.
+</canvas>
+
+<!-- I wanted to use display:inline-block, but it was being too much of
+     a pain. Now it's tables all the way down... -->
+
+<div class="colcity">
+    <p class="citylabel" id="cityA">City A</p>
+    <table>
+        <tr>
+            <td class="label" id="lutilityA">Utility:</td>
+            <td class="showutility" id="utilityA">0</td> 
+        </tr>
+        <tr>
+            <td class="label" id="lprod1A">Bread:</td>
+            <td class="value" id="prod1A"><span id="value1A">0</span><span class="maxvalue"> (<span id="maxprod1A">0</span>)</span></td>
+        </tr>
+        <tr>
+            <td class="label" id="lprod2A">Wine:</td>
+            <td class="value" id="prod2A"><span id="value2A">0</span><span class="maxvalue"> (<span id="maxprod2A">0</span>)</span></td>
+        </tr>
+    </table>
+</div>
+<div class="coltrade">
+    <div class="centertrade">
+        <p id="ltrade" class="citylabel">Trade</p>
+        <div class="proposebox">
+            <p id="feedback" class="proposedesc">Clicking this button will end your turn.</p>
+            <button id="propose" onclick="propose()">Propose</button>
+        </div>
+        <div class="rangebox">
+            <span id="input0A" class="linput0">0</span>
+            <input type="range" id="trade1" min="0" max="50" value="0" onchange="tradeChanged(0, this.value)" disabled />
+            <span id="input0B" class="linput1">0</span>
+        </div>
+        <div class="rangebox">
+            <span id="input1A" class="linput0">0</span>
+            <input type="range" id="trade2" min="0" max="50" value="0" onchange="tradeChanged(1, this.value)" disabled />
+            <span id="input1B"class="linput1">0</span>
+        </div>
+    </div>
+</div>
+<div class="colcity">
+    <p class="citylabel" id="cityB">City B</p>
+    <table>
+        <tr>
+            <td class="label" id="lutilityB">Utility:</td>
+            <td class="showutility" id="utilityB">0</td> 
+        </tr>
+        <tr>
+            <td class="label" id="lprod1B">Bread:</td>
+            <td class="value" id="prod1B"><span id="value1B">0</span><span class="maxvalue"> (<span id="maxprod1B">0</span>)</span></td>
+        </tr>
+        <tr>
+            <td class="label" id="lprod2B">Wine:</td>
+            <td class="value" id="prod2B"><span id="value2B">0</span><span class="maxvalue"> (<span id="maxprod2B">0</span>)</span></td>
+        </tr>
+    </table>
+</div>
+
+<div id="turn">> It's your turn.</div>
+
+<p class="text">The idea behind this game is in presenting the concept of comparative advantage. The concept was first introduced by David Ricardo, the son of Portuguese jewish refugees in Britain at a time when people were afraid free trade would mean Portugal would completely dominate England in trade. David Ricardo showed, together with a numerical example, how both Portugal and England could benefit from trade.</p>
+</div>
+
+<script src="utils.js"></script>
+<script src="logic.js"></script>
+<script src="view.js"></script>
+<script src="ai.js"></script>
+<script>
+//////////////////////////////// Initial Map Drawing
+
+var img = new Image();
+img.onload = function() {
+    ctx.drawImage(img, 0, 0);
+    for(var i = 0; i < cities.length; i++)
+        cities[i].draw(ctx, 0, false);
+    setEnableCity(0, null);
+    setEnableCity(1, null);
+    setEnableTrade(null, null);
+}
+img.src = 'map.svg';
+
+//////////////////////////////// Form Events
+
+function updateTrade(c, value) {
+    var chr = 'input' + String.fromCharCode(48 + c);
+    for(var i = 0; i < 2; i++) {
+        var chr2 = chr + String.fromCharCode(65 + i);
+        var v = (i == 0 && value < 0) || (i == 1 && value > 0) ?
+            Math.floor(Math.abs(value)) : 0;
+        document.getElementById(chr2).innerHTML = v;
+    }
+}
+
+function tradeChanged(c, value) {
+    updateTrade(c, value);
+
+    if(value >= 0) {
+        selected[0].setExports(selected[1], c, value);
+        selected[1].setExports(selected[0], c, 0);
+    }
+    else {
+        selected[1].setExports(selected[0], c, -value);
+        selected[0].setExports(selected[1], c, 0);
+    }
+
+    updateCityInfo(0, selected[0], 'white');
+    updateCityInfo(1, selected[1], 'white');
+    if(!locked)
+        lockMap();
+}
+
+function propose() {
+    var feedback = document.getElementById('feedback');
+    var button = document.getElementById('propose');
+
+    if(!locked)
+        lockMap();
+    if(selected[0] == null || selected[1] == null) {
+        endTurn();
+        return;
+    }
+
+    var accepted0 = selected[0].propose();
+    var accepted1 = selected[1].propose();
+
+    if(accepted0 && accepted1) {
+        selected[0].accept();
+        selected[1].accept();
+        var feedback = document.getElementById('feedback');
+        feedback.innerHTML = 'We accept joining your league!';
+        feedback.style.color = 'green';
+    }
+    else {
+        selected[0].restore();
+        selected[1].restore();
+
+        var text;
+        if(!accepted0 && !accepted1)
+            text = 'Not a good deal for either!';
+        else if(!accepted0)
+            text = selected[0].name + ': not a good deal!';
+        else//(!accepted1)
+            text = selected[1].name + ': not a good deal!';
+        var feedback = document.getElementById('feedback');
+        feedback.innerHTML = text;
+        feedback.style.color = 'red';
+    }
+    button.innerHTML = 'End Turn';
+    button.onclick = endTurn;
+
+    updateCityInfo(0, selected[0], accepted0 ? 'green' : 'red');
+    updateCityInfo(1, selected[1], accepted1 ? 'green' : 'red');
+
+    var trade1 = document.getElementById('trade1');
+    trade1.disabled = true;
+    var trade2 = document.getElementById('trade1');
+    trade2.disabled = true;
+}
+
+function endTurn() {
+    var feedback = document.getElementById('feedback');
+    var button = document.getElementById('propose');
+    feedback.innerHTML = '';
+    button.disabled = true;
+    playerTurn(1);
+}
+
+var delay = 2500;
+
+function playerTurn(player) {
+    var status = document.getElementById('turn');
+    if(player > 0) {
+        status.innerHTML = 'AI #' + player + ' turn: please wait.';
+        status.style.backgroundColor = playersColors[player+1];
+        status.style.color = 'white';
+        status.style.fontWeight = 'bold';
+        computerTurn(player);
+
+        // the timeout is used as a delay/pause
+        setTimeout(function() {
+            playerTurn((player+1) % (playersColors.length-1));
+        }, delay);
+    }
+    else {
+        var button = document.getElementById('propose');
+        button.innerHTML = 'Propose';
+        button.onclick = propose;
+        button.disabled = false;
+        unlockMap();
+
+        status.innerHTML = "> It's your turn.";
+        status.style.color = playersColors[1];
+        status.style.backgroundColor = 'white';
+        status.style.fontWeight = 'normal';
+
+        // the first time the person is playing takes more time -- to make it
+        // clear it's AI turn -- but afterwards it's faster
+        delay = 500;
+    }
+}
+
+//////////////////////////////// Form Enable
+
+function updateCityInfo(i, city, utilityColor) {
+    if(city == null) {
+        var name = getCityInput('city', i);
+        name.innerHTML = 'City ' + String.fromCharCode(65 + i);
+        getCityInput('utility', i).innerHTML = 0;
+        getCityInput('value1', i).innerHTML = 0;
+        getCityInput('value2', i).innerHTML = 0;
+        getCityInput('maxprod1', i).innerHTML = 0;
+        getCityInput('maxprod2', i).innerHTML = 0;
+    }
+    else {
+        var name = getCityInput('city', i);
+        name.innerHTML = city.name;
+        name.style.color = i == 0 ? 'blue' : 'green';
+        var u = city.getMaxUtility();
+        getCityInput('utility', i).innerHTML = (u.utility*100).toFixed(2);
+        getCityInput('value1', i).innerHTML = u.prod0.toFixed();
+        getCityInput('value2', i).innerHTML = u.prod1.toFixed();
+        getCityInput('maxprod1', i).innerHTML = (city.pop * city.z[0]).toFixed();
+        getCityInput('maxprod2', i).innerHTML = (city.pop * city.z[1]).toFixed();
+    }
+    getCityInput('utility', i).style.color = utilityColor;
+}
+
+function getCityInput(id, i) {
+    var chr = id + String.fromCharCode(65 + i);
+    return document.getElementById(chr);
+}
+
+function setEnableCity(i, city) {
+    var color = city != null ? 'black' : 'gray';
+    var fields = ['city', 'lutility', 'lprod1', 'lprod2', 'value1', 'value2'];
+    for(var k = 0; k < fields.length; k++)
+        getCityInput(fields[k], i).style.color = color;
+    fields = ['utility', 'prod1', 'prod2'];
+    for(var k = 0; k < fields.length; k++)
+        getCityInput(fields[k], i).style.borderColor = color;
+    getCityInput('utility', i).style.backgroundColor = color;
+    updateCityInfo(i, city, 'white');
+}
+
+function getTradeInput(id, i) {
+    var chr = id + String.fromCharCode(49 + i);
+    return document.getElementById(chr);
+}
+
+function setEnableTrade(city1, city2) {
+    var selected = city2 != null;
+    var color = selected ? 'black' : 'gray';
+    document.getElementById('trade1').disabled = !selected;
+    document.getElementById('trade2').disabled = !selected;
+    document.getElementById('propose').disabled = !selected;
+    document.getElementById('ltrade').style.color = color;
+    document.getElementById('input0A').style.color = color;
+    document.getElementById('input0B').style.color = color;
+    document.getElementById('input1A').style.color = color;
+    document.getElementById('input1B').style.color = color;
+    if(city2 != null) {
+        for(var c = 0; c < commodities; c++) {
+            var NX = getTradeBalance(city1, city2, c);
+            var field = getTradeInput('trade', c);
+            field.min = -city2.canExport(c) + (NX < 0 ? NX : 0);
+            field.max = +city1.canExport(c) + (NX > 0 ? NX : 0);
+            field.value = NX;
+            updateTrade(c, NX);
+        }
+    }
+    else {
+        for(var c = 0; c < commodities; c++) {
+            getTradeInput('trade', c).value = 0;
+            updateTrade(c, 0);
+        }
+    }
+}
+
+var locked = false;
+
+function lockMap() {
+    hover = null;
+    locked = true;
+    for(var i = 0; i < cities.length; i++)
+        if(cities[i] != selected[0] && cities[i] != selected[1])
+            cities[i].draw(ctx, 0, true);
+    if(selected[0] != null && selected[1] != null) {
+        selected[0].save(0);
+        selected[1].save(0);
+    }
+}
+
+function unlockMap() {
+    locked = false;
+    selected[0] = null;
+    selected[1] = null;
+    for(var i = 0; i < cities.length; i++)
+        cities[i].draw(ctx, 0, false);
+    setEnableCity(0, null);
+    setEnableCity(1, null);
+    setEnableTrade(null, null);
+}
+
+//////////////////////////////// Mouse Events
+
+function getCityUnder(mouse) {
+    // my android browser does not have Number.MAX_SAFE_INTEGER
+    var mindist = 1000;
+    var ret = null;
+    for(var i = 0; i < cities.length; i++) {
+        var city = cities[i];
+        var dist = Math.pow(mouse.x - city.x, 2) + Math.pow(mouse.y - city.y, 2);
+        if(dist < mindist) {
+            mindist = dist;
+            ret = city;
+        }
+    }
+    return ret;
+}
+
+var hover = null;
+var selected = [null, null];
+var selectedi = -1;
+
+function getMousePos(canvas, evt) {
+    var r = canvas.getBoundingClientRect();
+    return {x: evt.clientX - r.left, y: evt.clientY - r.top};
+}
+
+canvas.addEventListener('mousemove', function(evt) {
+    if(locked) return;
+    var mouse = getMousePos(canvas, evt);
+    var city = getCityUnder(mouse);
+    if(hover != city) {
+        if(hover != null && hover != selected[0] && hover != selected[1])
+            hover.draw(ctx, 0);
+        canvas.style.cursor = city != null ? 'pointer' : 'auto';
+        if(city != null && city != selected[0] && city != selected[1])
+            city.draw(ctx, -1);
+        hover = city;
+    }
+});
+
+canvas.addEventListener('mousedown', function(evt) {
+    if(locked) return;
+    var mouse = getMousePos(canvas, evt);
+    var city = getCityUnder(mouse);
+    if(city != null && city != selected[0] && city != selected[1]) {
+        selectedi = (selectedi+1) % 2;
+        if(selected[selectedi] != null)
+            selected[selectedi].draw(ctx, 0);
+        selected[selectedi] = city;
+        city.draw(ctx, selectedi+1, false);
+
+        setEnableCity(selectedi, city);
+        setEnableTrade(selected[0], selected[1]);
+    }
+});
+</script>
+
+</body>
+</html>

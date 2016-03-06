@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Elasticity game</title>
+    <style>
+        /* layout */
+
+        #wrap { width: 670px; margin: 0 auto; }
+        table { display: inline-block; width: 300px; }
+        td { border: 1px solid black; }
+        table td.point { font-weight: bold; text-align: center; }
+
+        #question { display: inline-block; width: 14em; font-size: small; vertical-align: middle; }
+        button { vertical-align: middle; }
+        p.text { margin-top: 60px; text-align: justify; }
+
+        canvas { margin-right: 12px; }
+    </style>
+</head>
+
+<body>
+<div id="wrap">
+    <canvas id="mycanvas" width="350" height="280"></canvas>
+
+    <table id="table">
+        <tr><th>Point</th><th>Weather</th><th>Fashion</th><th>Meat Price</th></tr>
+        <tr><td class="point">A</td><td></td><td></td><td></td></tr>
+        <tr><td class="point">B</td><td></td><td></td><td></td></tr>
+        <tr><td class="point">C</td><td></td><td></td><td></td></tr>
+        <tr><td class="point">D</td><td></td><td></td><td></td></tr>
+        <tr><td class="point">E</td><td></td><td></td><td></td></tr>
+        <tr><td class="point">F</td><td></td><td></td><td></td></tr>
+        <tr><td class="point">G</td><td></td><td></td><td></td></tr>
+        <tr><td class="point">H</td><td></td><td></td><td></td></tr>
+        <tr><td class="point">I</td><td></td><td></td><td></td></tr>
+    </table>
+
+    <button id="newbutton" onclick="newPoint()">New Price Point</button>
+    <p id="question">Ask for new price points, and then guess the demand curve!</p>
+
+<p class="text">This game illustrates the concept of elasticity: try to find the supply and demand curves based on what they depend on.</p>
+</div>
+</div>
+
+<script src="utils.js"></script>
+<script>
+var canvas = document.getElementById('mycanvas');
+var ctx = canvas.getContext('2d');
+
+// S - supply, D - demand
+// S(P) = beta0 + beta1.X1 + beta3.X3
+// D(P) = beta0 + beta2.X2 + beta3.X3
+// TODO: beta3
+
+var S_beta0 = gauss_rand(-10, 2);
+var S_beta1 = gauss_rand(2, 1);
+
+var D_beta0 = gauss_rand(60, 2);
+var D_beta2 = gauss_rand(4, 1);
+
+function Price(X1, X2) {
+    return 0.5 * ((D_beta0 + D_beta2*X2) - (S_beta0 + S_beta1*X1));
+}
+
+function Quantity(P, X1, X2) {
+    return S_beta0 + S_beta1*X1 + P;
+}
+
+var Pmin = Price(
+    S_beta1 < 0 ? 0 : 3,
+    D_beta2 < 0 ? 3 : 0
+);
+var Pmax = Price(
+    S_beta1 > 0 ? 0 : 3,
+    D_beta2 > 0 ? 3 : 0
+);
+var Qmin = Quantity(Pmin,
+    S_beta1 < 0 ? 3 : 0,
+    0);
+var Qmax = Quantity(Pmax,
+    S_beta1 > 0 ? 3 : 0,
+    0);
+
+function drawAxis() {
+    ctx.strokeStyle = 'gray';
+    ctx.moveTo(15, 0);
+    ctx.lineTo(15, 280-15);
+    ctx.lineTo(350, 280-15);
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.font='10px Arial';
+    ctx.textAlign = 'center';
+    ctx.save();
+    ctx.translate(0, 131);
+    ctx.rotate(-Math.PI/2);
+    ctx.textBaseline = 'top';
+    ctx.fillText('Price of Wool', 0, 0);
+    ctx.restore();
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('Quantity of Wool sold per year', 175, 280);
+}
+
+function drawPoint(label, x, y) {
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, 2*Math.PI);
+    ctx.fill();
+    ctx.textAlign = 'center';
+    if(y < 20) {
+        ctx.textBaseline = 'top';
+        ctx.fillText(label, x, y+8);
+    }
+    else {
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(label, x, y-8);
+    }
+}
+
+function getLine(X, Y) {
+    var p0 = getPos(X);
+    var p1 = getPos(Y);
+    var m = (p1.y-p0.y) / (p1.x-p0.x);
+    var b = p1.y - m*p1.x;
+    return {x0: 0, y0: b, x1: 350, y1: 350*m+b};
+}
+
+function drawLine(X, Y, hover) {
+    var line = getLine(X, Y);
+    ctx.beginPath();
+    ctx.strokeStyle = hover ? 'orange' : 'gray';
+    ctx.lineWidth = hover ? 2 : 1;
+    ctx.moveTo(line.x0, line.y0);
+    ctx.lineTo(line.x1, line.y1);
+    ctx.stroke();
+}
+
+function getPos(X) {
+    var P = Price(X[1], X[2]);
+    var Q = Quantity(P, X[1], X[2]);
+
+    var x = ((Q-Qmin)*(350-15)) / (Qmax-Qmin);
+    var y = (280-15) - (((P-Pmin)*(280-15)) / (Pmax-Pmin));
+
+    return {x: x, y: y};
+}
+
+var points = 0;
+Xs = fisher_yates(4*4);
+
+function fisher_yates(n) {
+    // see https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
+    X = new Array(n);
+    for(var i = 0; i < n; i++)
+        X[i] = i;
+    for(var i = 0; i < n-2; i++) {
+        var j = Math.floor(Math.random()*(n-i));
+        // exchange a[i] and a[i+j]
+        var t = X[i];
+        X[i] = X[i+j];
+        X[i+j] = t;
+    }
+    return X;
+}
+
+function getX(pt) {
+    var X1 = Math.floor(Xs[pt] / 4);
+    var X2 = Xs[pt] % 4;
+    return [0, X1, X2];
+}
+
+function weatherstr(i) {
+    switch(i) {
+        case 0: return 'Terrible';
+        case 1: return 'Bad';
+        case 2: return 'Good';
+        case 3: return 'Great';
+    }
+}
+
+function fashionstr(i) {
+    switch(i) {
+        case 0: return 'Last year';
+        case 1: return 'No';
+        case 2: return 'Yes';
+        case 3: return 'Very hip';
+    }
+}
+
+function meatpricestr(i) {
+    switch(i) {
+        case 0: return '$1.00';
+        case 1: return '$2.00';
+        case 2: return '$3.00';
+        case 3: return '$4.00';
+    }
+}
+
+function draw(hover) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawAxis();
+    var XA = getX(0);
+
+    // first, draw lines (so they are in the background)
+    for(var pt = 1; pt < points; pt++) {
+        var XB = getX(pt);
+        drawLine(XA, XB, pt == hover);
+    }
+
+    // now draw points over them
+    for(var pt = 0; pt < points; pt++) {
+        var label = String.fromCharCode(65 + pt);
+        pos = getPos(getX(pt));
+        drawPoint(label, pos.x, pos.y);
+    }
+}
+
+function newPoint() {
+    var label = String.fromCharCode(65 + points);
+    var X = getX(points);
+
+    var table = document.getElementById('table');
+    var row = table.rows[points+1];
+    row.cells[0].innerHTML = label;
+    row.cells[2].innerHTML = fashionstr(X[1]);
+    row.cells[3].innerHTML = meatpricestr(X[2]);
+    points += 1;
+    if(points == 9)
+        document.getElementById('newbutton').disabled = true;
+    draw();
+}
+
+newPoint();
+
+function getMouseLine(mouse) {
+    var XA = getX(0);
+    var mindist = 200;
+    var minpt = 0;
+    for(var pt = 1; pt < points; pt++) {
+        var XB = getX(pt);
+        var line = getLine(XA, XB);
+        var d = distToSegmentSq(mouse.x, mouse.y, line.x0, line.y0,
+                                line.x1, line.y1);
+        if(d < mindist) {
+            mindist = d;
+            minpt = pt;
+        }
+    }
+    return minpt;
+}
+
+var hover = 0;
+var gameover = false;
+var tries = 0;
+var curTimeout = 0;
+
+canvas.addEventListener('mousemove', function(evt) {
+    if(gameover)
+        return;
+    var pt = getMouseLine(getMousePos(canvas, evt));
+    if(hover != pt) {
+        draw(pt);
+        canvas.style.cursor = pt > 0 ? 'pointer' : 'auto';
+        hover = pt;
+    }
+});
+
+canvas.addEventListener('mousedown', function(evt) {
+    if(gameover)
+        return;
+    var pt = getMouseLine(getMousePos(canvas, evt));
+    if(pt > 0) {
+        XA = getX(0);
+        XB = getX(pt);
+        var q = document.getElementById('question');
+        if(XA[2] == XB[2]) {
+            q.innerHTML = "That's right !";
+            q.style.color = 'green';
+            q.style.fontWeight = 'bold';
+            document.getElementById('newbutton').disabled = true;
+            gameover = true;
+        }
+        else {
+            q.innerHTML = "That's not the demand curve !";
+            q.style.color = 'red';
+            if(curTimeout > 0)
+                clearTimeout(curTimeout);
+            setTimeout(function(t) {
+                q.innerHTML = '&nbsp;';
+                curTimeout = 0;
+            }, 1000);
+        }
+    }
+    tries += 1;
+});
+
+</script>
+
+</body>
+</html>

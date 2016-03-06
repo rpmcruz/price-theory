@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Arbritage game</title>
+    <style>
+        /* layout */
+
+        /* canvas is placed inside wrap */
+        canvas { position:absolute; width: 100%; height: 100%; }
+        #wrap { position: relative; width: 400px; height: 200px; margin: 0 auto; }
+
+        #item0 { position: absolute; left: 150px; top: 0px; }
+        #item1 { position: absolute; left: 0px; bottom: 0px; }
+        #item2 { position: absolute; right: 0px; bottom: 0px; }
+
+        /* In javascript, it's a nightmare to get proper coordinates from divs.
+           So, we define here the positioning, but you must redefine it for the
+           arrow drawing. */
+
+        /* top-left */
+        #trade0tl { position: absolute; left: 120px; top: 50px; }
+        #trade1tl { position: absolute; left: 150px; top: 50px; }
+        #trade2tl { position: absolute; left: 90px; bottom: 50px; }
+        #trade3tl { position: absolute; left: 120px; bottom: 50px; }
+
+        /* top-right */
+        #trade0tr { position: absolute; left: 250px; top: 50px; }
+        #trade1tr { position: absolute; left: 270px; top: 50px; }
+        #trade2tr { position: absolute; left: 270px; bottom: 50px; }
+        #trade3tr { position: absolute; left: 300px; bottom: 50px; }
+
+        /* left-right */
+        #trade0lr { position: absolute; left: 130px; bottom: 25px; }
+        #trade1lr { position: absolute; left: 130px; bottom: 5px; }
+        #trade2lr { position: absolute; right: 80px; bottom: 25px; }
+        #trade3lr { position: absolute; right: 80px; bottom: 5px; }
+
+        .item { width: 100px; border-style: solid; border-width: 2px; padding: 4px; }
+        .detail { margin: 0; font-weight: bold; text-align: center; }
+        .price { font-size: small; width: 5em; }
+        p.text { padding-top: 260px; text-align: justify; }
+    </style>
+</head>
+
+<body>
+<div id="wrap">
+    <canvas id="mycanvas" width="400" height="200"></canvas>
+
+    <div class="item" id="item0">
+        <p id="Q0" class="detail">30 L</p>
+        <p class="detail">Wine</p>
+    </div>
+
+    <div class="item" id="item1">
+        <p id="Q2" class="detail">50 Kg</p>
+        <p class="detail">Flour</p>
+    </div>
+
+    <div class="item" id="item2">
+        <p id="Q1" class="detail">20 Kg</p>
+        <p class="detail">Salt</p>
+    </div>
+
+    <div class="price" id="trade0tl">1</div>
+    <div class="price" id="trade1tl">0.33</div>
+    <div class="price" id="trade2tl">3</div>
+    <div class="price" id="trade3tl">1</div>
+
+    <div class="price" id="trade0tr">1</div>
+    <div class="price" id="trade1tr">1.5</div>
+    <div class="price" id="trade2tr">0.66</div>
+    <div class="price" id="trade3tr">1</div>
+
+    <div class="price" id="trade0lr">1</div>
+    <div class="price" id="trade1lr">5</div>
+    <div class="price" id="trade2lr">0.20</div>
+    <div class="price" id="trade3lr">1</div>
+
+
+<p class="text">This game illustrates how people can make money on arbritage. This is a barter economy (no money), but you could easily see how this would work in the currency market for instance (where too there is no measure of account and so can be seen as a barter economy) or even the stockmarket. In the long run, this bidding of prices up and down regulates prices.</p>
+</div>
+</div>
+
+<script src="utils.js"></script>
+<script>
+//////////////////////////////// Utils
+
+function _drawArrow(ctx, tailx, taily, tipx, tipy) {
+    // based on http://www.coderanch.com/t/340443/GUI/java/Draw-arrow-head-line
+    //** line
+    ctx.beginPath();
+    ctx.moveTo(tailx, taily);
+    ctx.lineTo(tipx, tipy);
+    ctx.lineWidth = 0.75;
+    ctx.stroke();
+    //** arrow head
+    // contants
+    var phi = 0.35;
+    var barb = 8;
+    // code
+    var dy = tipy - taily;
+    var dx = tipx - tailx;
+    var theta = Math.atan2(dy, dx);
+    ctx.beginPath();
+    ctx.moveTo(
+        tipx - barb*Math.cos(theta-phi),
+        tipy - barb*Math.sin(theta-phi));
+    ctx.lineTo(tipx, tipy);
+    ctx.lineTo(
+        tipx - barb*Math.cos(theta+phi),
+        tipy - barb*Math.sin(theta+phi));
+    ctx.fill();
+}
+
+function drawArrow(ctx, tipx, tipy, tailx, taily, head) {
+    if(head == 0)
+        _drawArrow(ctx, tailx, taily, tipx, tipy);
+    else
+        _drawArrow(ctx, tipx, tipy, tailx, taily);
+}
+
+//////////////////////////////// Logic
+
+var canvas = document.getElementById('mycanvas');
+var ctx = canvas.getContext('2d');
+
+arrows = [
+    [120, 70, 95, 130],
+    [120+28, 70, 95+28, 130],
+
+    [255, 70, 275, 130],
+    [255+28, 70, 275+28, 130],
+
+    [145, 168, 245, 168],
+    [145, 168+18, 245, 168+18],
+];
+
+function drawArrows(ctx, hover) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for(var i = 0; i < arrows.length; i++) {
+        var color = (i == hover) ? 'red' : 'black';
+        ctx.fillStyle = color;
+        ctx.strokeStyle = color;
+        var a = arrows[i];
+        drawArrow(ctx, a[0], a[1], a[2], a[3], i%2);
+    }
+}
+
+function getArrowMouse(mouse) {
+    var mindist = 100;
+    var minarrow = -1;
+    for(var i = 0; i < arrows.length; i++) {
+        var a = arrows[i];
+        var d = distToSegmentSq(mouse.x, mouse.y,
+            a[0], a[1], a[2], a[3]);
+        if(d < mindist) {
+            mindist = d;
+            minarrow = i;
+        }
+    }
+    return minarrow;
+}
+
+var hover = -1;
+drawArrows(ctx, -1);
+
+//////////////////////////////// Events & Logic
+
+var prices = [
+    // fromWine, toWine, fromSalt, toSalt, fromFlour, toFlour
+    [0, 1, 0, 0, -3, 0],  // 0
+    [1/3, 0, 0, 0, 0, 1],
+    [0, 1, 1/1.5, 0, 0, 0],  // 2
+    [1.5, 0, 0, 1, 0, 0],
+    [0, 0, 0.20, 0, 0, 1],  // 4
+    [0, 0, 0, 1, 5, 0]
+];
+var Q = [30, 20, 50];  // wine, salt, flour
+
+canvas.addEventListener('mousemove', function(evt) {
+    var arrow = getArrowMouse(getMousePos(canvas, evt));
+    if(arrow != hover) {
+        console.log(arrow);
+        drawArrows(ctx, arrow);
+        canvas.style.cursor = arrow >= 0 ? 'pointer' : 'auto';
+        hover = arrow;
+    }
+});
+
+canvas.addEventListener('mousedown', function(evt) {
+    var arrow = getArrowMouse(getMousePos(canvas, evt));
+    if(arrow >= 0) {
+        var P = prices[arrow];
+        var Q0 = Q[0] + P[1] - P[0];
+        var Q1 = Q[1] + P[3] - P[2];
+        var Q2 = Q[2] + P[5] - P[4];
+        if(Q0 >= 0 && Q1 >= 0 && Q2 >= 0) {
+            Q[0] = Q0;
+            Q[1] = Q1;
+            Q[2] = Q2;
+            document.getElementById('Q0').innerHTML = Q[0].toFixed(1);
+            document.getElementById('Q1').innerHTML = Q[1].toFixed(1);
+            document.getElementById('Q2').innerHTML = Q[2].toFixed(1);
+        }
+    }
+});
+
+</script>
+
+</body>
+</html>
