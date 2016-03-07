@@ -180,7 +180,6 @@ var Q = [30, 20, 50];  // wine, salt, flour
 canvas.addEventListener('mousemove', function(evt) {
     var arrow = getArrowMouse(getMousePos(canvas, evt));
     if(arrow != hover) {
-        console.log(arrow);
         drawArrows(ctx, arrow);
         canvas.style.cursor = arrow >= 0 ? 'pointer' : 'auto';
         hover = arrow;
