@@ -52,14 +52,12 @@ City.prototype.save = function(player) {
         for(var c = 0; c < commodities; c++)
             this.ex[c] = new Array(cities.length).fill(0);
         this.league = player;
-console.log(this.name + ' temporary set to this league');
     }
 }
 
 City.prototype.restore = function() {
     this.ex = this.oldex;
     this.league = this.oldleague;
-console.log(this.name + ' restore!');
 }
 
 City.prototype.accept = function() {
@@ -136,14 +134,14 @@ City.prototype.getMaxUtility = function() {
                 ex += this.ex[c][i];
     for(var c = 0; c < commodities; c++)
         for(var i = 0; i < cities.length; i++)
-            if(i != this.id && cities[i] == this.league)
+            if(i != this.id && cities[i].league == this.league)
                 im[c] += cities[i].ex[c][this.id];
 
     var z0 = this.z[0];
     var z1 = this.z[1];
 
-    var l0 = (a*z1*(ex+this.pop) + a*(im[1]-im[0]) - Math.log(z1/z0))/(a*(z0 + z1));
-    var l1 = (a*z0*(ex+this.pop) + a*(im[0]-im[1]) + Math.log(z1/z0))/(a*(z0 + z1));
+    var l0 = (a*z1*(this.pop-ex) + a*(im[1]-im[0]) - Math.log(z1/z0))/(a*(z0 + z1));
+    var l1 = (a*z0*(this.pop-ex) + a*(im[0]-im[1]) + Math.log(z1/z0))/(a*(z0 + z1));
 
     if(l0 < 0) {
         l0 = 0;

@@ -148,8 +148,8 @@ function tradeChanged(c, value) {
         selected[1].setExports(selected[0], c, 0);
     }
     else {
-        selected[1].setExports(selected[0], c, -value);
         selected[0].setExports(selected[1], c, 0);
+        selected[1].setExports(selected[0], c, -value);
     }
 
     updateCityInfo(0, selected[0], 'white');
