@@ -45,6 +45,7 @@ for(var i = 0; i < cities.length; i++) {
 
 City.prototype.save = function(player) {
     this.oldutility = this.getMaxUtility(this.league).utility;
+console.log('save - ' + this.name + ' U=' + this.oldutility + ' league:' + this.league);
     this.oldex = this.ex.slice();
     this.oldleague = this.league;
     if(player != this.league) {
@@ -58,6 +59,12 @@ City.prototype.save = function(player) {
 City.prototype.restore = function() {
     this.ex = this.oldex;
     this.league = this.oldleague;
+var x0 = 0, x1 = 0;
+for(var i = 0; i < cities.length; i++) {
+    x0 += this.ex[0][i];
+    x1 += this.ex[1][i];
+}
+console.log('** restore - now is league: ' + this.league + ' exports: ' + x0 + ' ' + x1);
 }
 
 City.prototype.accept = function() {
@@ -88,6 +95,7 @@ City.prototype.canExport = function(c) {
 }
 
 City.prototype.setExports = function(other, c, ex) {
+console.log(this.name + ' setExports: ' + c + ' ' + ex);
     this.ex[c][other.id] += ex / this.z[c];
 }
 
@@ -137,6 +145,7 @@ City.prototype.getMaxUtility = function() {
             if(i != this.id && cities[i].league == this.league)
                 im[c] += cities[i].ex[c][this.id];
 console.log(this.name + ' has exports: ' + ex + ' has imports: ' + (im[0]+im[1]));
+console.log('pop-exp: ' + this.pop + ' ' + ex);
 
     var z0 = this.z[0];
     var z1 = this.z[1];

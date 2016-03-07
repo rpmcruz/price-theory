@@ -141,7 +141,10 @@ function updateTrade(c, value) {
 }
 
 function tradeChanged(c, value) {
+console.log('***** trade changed: ' + c + ' ' + value);
     updateTrade(c, value);
+    if(!locked)
+        lockMap();
 
     if(value >= 0) {
         selected[0].setExports(selected[1], c, value);
@@ -154,8 +157,6 @@ function tradeChanged(c, value) {
 
     updateCityInfo(0, selected[0], 'white');
     updateCityInfo(1, selected[1], 'white');
-    if(!locked)
-        lockMap();
 }
 
 function propose() {
