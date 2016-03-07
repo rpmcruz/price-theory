@@ -136,6 +136,7 @@ City.prototype.getMaxUtility = function() {
         for(var i = 0; i < cities.length; i++)
             if(i != this.id && cities[i].league == this.league)
                 im[c] += cities[i].ex[c][this.id];
+console.log(this.name + ' has exports: ' + ex + ' has imports: ' + (im[0]+im[1]));
 
     var z0 = this.z[0];
     var z1 = this.z[1];
