@@ -91,7 +91,6 @@ function _drawArrow(ctx, tailx, taily, tipx, tipy) {
     ctx.beginPath();
     ctx.moveTo(tailx, taily);
     ctx.lineTo(tipx, tipy);
-    ctx.lineWidth = 0.75;
     ctx.stroke();
     //** arrow head
     // contants
@@ -138,9 +137,10 @@ arrows = [
 function drawArrows(ctx, hover) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for(var i = 0; i < arrows.length; i++) {
-        var color = (i == hover) ? 'red' : 'black';
+        var color = (i == hover) ? 'orange' : 'black';
         ctx.fillStyle = color;
         ctx.strokeStyle = color;
+        ctx.lineWidth = (i == hover) ? 2 : 1;
         var a = arrows[i];
         drawArrow(ctx, a[0], a[1], a[2], a[3], i%2);
     }
