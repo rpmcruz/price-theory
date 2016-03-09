@@ -7,11 +7,11 @@ The games are not meant to be playable for long, but to be a complement and moti
 
 Possibly, the idea would be revamp the textbook, which is available online but presently featuring lacklustering and non-interactive graphics.
 
-Our mailing list: [price-theory@googlegroups.com](https://groups.google.com/d/forum/price-theory). Join up!
-
 Current Progress:
 
 1. [Elasticity](https://rawgit.com/rpmcruz/price-theory/master/elasticity/elasticity.html)
 2. [Hansa](https://rawgit.com/rpmcruz/price-theory/master/hansa/hansa.html)
 3. [Supermarket](https://rawgit.com/rpmcruz/price-theory/master/supermarket/supermarket.html)
 4. [Arbritrage](https://rawgit.com/rpmcruz/price-theory/master/arbritrage/arbritrage.html)
+
+**Our mailing list: [price-theory@googlegroups.com](https://groups.google.com/d/forum/price-theory). Join up!**
