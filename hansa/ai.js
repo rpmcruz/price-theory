@@ -25,7 +25,7 @@ function computerTurn(player) {
         city1 = cities[getRandomInt(0, cities.length)];
     } while(city0 == city1 || (city0.league == player && city1.league == player));
 
-    var fraction = 0.80;
+    var fraction = 0.10;
     var c = getRandomInt(0, 2);
     city0.save(player);
     city1.save(player);
