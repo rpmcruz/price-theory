@@ -45,7 +45,6 @@ for(var i = 0; i < cities.length; i++) {
 
 City.prototype.save = function(player) {
     this.oldutility = this.getMaxUtility(this.league).utility;
-console.log('save - ' + this.name + ' U=' + this.oldutility + ' league:' + this.league);
     this.oldex = this.ex.slice();
     this.oldleague = this.league;
     if(player != this.league) {
@@ -59,12 +58,6 @@ console.log('save - ' + this.name + ' U=' + this.oldutility + ' league:' + this.
 City.prototype.restore = function() {
     this.ex = this.oldex;
     this.league = this.oldleague;
-var x0 = 0, x1 = 0;
-for(var i = 0; i < cities.length; i++) {
-    x0 += this.ex[0][i];
-    x1 += this.ex[1][i];
-}
-console.log('** restore - now is league: ' + this.league + ' exports: ' + x0 + ' ' + x1);
 }
 
 City.prototype.accept = function() {
@@ -75,7 +68,6 @@ City.prototype.accept = function() {
             for(var i = 0; i < cities.length; i++)
                 if(cities[i].league != this.league)
                     cities[i].ex[c][this.id] = 0;
-
         this.draw(ctx, 0, false);
     }
 }
@@ -86,17 +78,17 @@ City.prototype.propose = function() {
 
 City.prototype.canExport = function(c) {
     var emp = 0;
-    for(var i = 0; i < cities.length; i++)
-        if(cities[i].league == this.league)
-            emp += this.ex[c][i];
-    var unemployed = this.pop - emp;
+    for(var _c = 0; _c < commodities; _c++)
+        for(var i = 0; i < cities.length; i++)
+            if(cities[i].league == this.league)
+                emp += this.ex[_c][i];
+    var unemployed = Math.max(0, this.pop - emp);
     var ret = unemployed * this.z[c];
     return ret;
 }
 
 City.prototype.setExports = function(other, c, ex) {
-console.log(this.name + ' setExports: ' + c + ' ' + ex);
-    this.ex[c][other.id] += ex / this.z[c];
+    this.ex[c][other.id] = ex / this.z[c];
 }
 
 function getTradeBalance(city1, city2, c) {
@@ -144,8 +136,6 @@ City.prototype.getMaxUtility = function() {
         for(var i = 0; i < cities.length; i++)
             if(i != this.id && cities[i].league == this.league)
                 im[c] += cities[i].ex[c][this.id];
-console.log(this.name + ' has exports: ' + ex + ' has imports: ' + (im[0]+im[1]));
-console.log('pop-exp: ' + this.pop + ' ' + ex);
 
     var z0 = this.z[0];
     var z1 = this.z[1];

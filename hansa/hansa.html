@@ -141,7 +141,6 @@ function updateTrade(c, value) {
 }
 
 function tradeChanged(c, value) {
-console.log('***** trade changed: ' + c + ' ' + value);
     updateTrade(c, value);
     if(!locked)
         lockMap();
@@ -215,7 +214,7 @@ function endTurn() {
     playerTurn(1);
 }
 
-var delay = 2500;
+var delay = 1500;
 
 function playerTurn(player) {
     var status = document.getElementById('turn');
