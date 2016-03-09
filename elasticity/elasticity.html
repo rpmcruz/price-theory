@@ -126,7 +126,7 @@ function getLine(X, Y) {
 function drawLine(X, Y, hover) {
     var line = getLine(X, Y);
     ctx.beginPath();
-    ctx.strokeStyle = hover ? 'orange' : 'gray';
+    ctx.strokeStyle = hover ? 'blue' : 'gray';
     ctx.lineWidth = hover ? 2 : 1;
     ctx.moveTo(line.x0, line.y0);
     ctx.lineTo(line.x1, line.y1);
