@@ -14,4 +14,4 @@ Current Progress:
 3. [Supermarket](https://rawgit.com/rpmcruz/price-theory/master/supermarket/supermarket.html)
 4. [Arbritrage](https://rawgit.com/rpmcruz/price-theory/master/arbritrage/arbritrage.html)
 
-**Our mailing list: [price-theory@googlegroups.com](https://groups.google.com/d/forum/price-theory). Join up!**
+Our mailing list: [price-theory@googlegroups.com](https://groups.google.com/d/forum/price-theory). **Join up!**
