@@ -16,4 +16,4 @@ Current Progress:
 
 Our mailing list: [price-theory@googlegroups.com](https://groups.google.com/d/forum/price-theory). **Join up!**
 
-Also check [our wiki](https://github.com/rpmcruz/price-theory/wiki)!
+Also, check [our wiki](https://github.com/rpmcruz/price-theory/wiki)!
