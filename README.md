@@ -15,3 +15,5 @@ Current Progress:
 4. [Arbritrage](https://rawgit.com/rpmcruz/price-theory/master/arbritrage/arbritrage.html)
 
 Our mailing list: [price-theory@googlegroups.com](https://groups.google.com/d/forum/price-theory). **Join up!**
+
+Also check [our wiki](https://github.com/rpmcruz/price-theory/wiki)!
