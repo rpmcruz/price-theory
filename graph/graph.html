@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Graphic plot utility</title>
+    <style>
+        /* layout */
+
+        #wrap { width: 670px; margin: 0 auto; }
+        table { display: inline-block; width: 300px; }
+        td { border: 1px solid black; }
+        table td.point { font-weight: bold; text-align: center; }
+
+        #question { display: inline-block; width: 14em; font-size: small; vertical-align: middle; }
+        button { vertical-align: middle; }
+        p.text { margin-top: 60px; text-align: justify; }
+
+        canvas { margin-right: 12px; }
+    </style>
+</head>
+
+<body>
+<div id="wrap">
+    <canvas id="mycanvas" width="350" height="280"></canvas>
+
+<p class="text">This utility could be used throughout the textbook for interactive plot illustration.</p>
+</div>
+</div>
+
+<script>
+var canvas = document.getElementById('mycanvas');
+var ctx = canvas.getContext('2d');
+
+function Formula(fn) {
+    this.fn = fn;
+}
+
+Formula.prototype.eval = function(x) {
+    return 1-this.fn(x);
+}
+
+Formula.prototype.draw = function(xmin, xmax, xstep, xconv, yconv) {
+    ctx.beginPath();
+    ctx.strokeStyle = 'black';
+    ctx.moveTo(xmin*xconv, this.eval(xmin)*yconv);
+
+    for(var x = xmin+xstep; x <= xmax; x += xstep) {
+        var y = this.eval(x);
+        ctx.lineTo(x*xconv, y*yconv);
+    }
+    ctx.stroke();
+}
+
+function drawAxis(xconv, yconv) {
+    ctx.strokeStyle = 'gray';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, yconv);
+    ctx.lineTo(xconv, yconv);
+    ctx.stroke();
+}
+
+drawAxis(350, 280);
+f1 = new Formula(function (x) { return x; });
+f2 = new Formula(function (x) { return 1-x; });
+f1.draw(0, 1, 0.1, 350, 280);
+f2.draw(0, 1, 0.1, 350, 280);
+
+</script>
+
+</body>
+</html>
