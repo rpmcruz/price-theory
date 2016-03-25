@@ -111,6 +111,7 @@ Your browser does not support the HTML5 canvas tag.
 </div>
 
 <script src="../utils/rand.js"></script>
+<script src="../utils/mouse.js"></script>
 <script src="logic.js"></script>
 <script src="view.js"></script>
 <script src="ai.js"></script>
@@ -370,11 +371,6 @@ function getCityUnder(mouse) {
 var hover = null;
 var selected = [null, null];
 var selectedi = -1;
-
-function getMousePos(canvas, evt) {
-    var r = canvas.getBoundingClientRect();
-    return {x: evt.clientX - r.left, y: evt.clientY - r.top};
-}
 
 canvas.addEventListener('mousemove', function(evt) {
     if(locked) return;
