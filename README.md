@@ -9,11 +9,10 @@ Possibly, the idea would be to revamp the textbook, which is available online bu
 
 Current Progress:
 
-1. [Elasticity](https://rawgit.com/rpmcruz/price-theory/master/elasticity/elasticity.html)
-2. [Hansa](https://rawgit.com/rpmcruz/price-theory/master/hansa/hansa.html)
-3. [Supermarket](https://rawgit.com/rpmcruz/price-theory/master/supermarket/supermarket.html)
-4. [Arbritrage](https://rawgit.com/rpmcruz/price-theory/master/arbritrage/arbritrage.html)
+1. [Elasticity](https://github.com/rpmcruz/price-theory/wiki/Elasticity)
+2. [Hansa](https://github.com/rpmcruz/price-theory/wiki/Hansa)
+3. [Supermarket](https://github.com/rpmcruz/price-theory/wiki/Supermarket)
+4. [Arbritrage](https://github.com/rpmcruz/price-theory/wiki/Arbritrage)
+5. [Dynamic Graphics](https://github.com/rpmcruz/price-theory/wiki/Dynamic%20Graphics)
 
 Our mailing list: [price-theory@googlegroups.com](https://groups.google.com/d/forum/price-theory). **Join up!**
-
-Also, check [our wiki](https://github.com/rpmcruz/price-theory/wiki)!
