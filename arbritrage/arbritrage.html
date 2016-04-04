@@ -4,11 +4,10 @@
     <title>Arbritage game</title>
     <style>
         #wrap {
-            position: relative;
             width: 450px;
             margin: 0 auto;
         }
-        .commodity-square {
+/*        .commodity-square {
             width: 100px;
             height: 50px;
             stroke: black;
@@ -36,13 +35,68 @@
             fill: black;
             font-size: small;
             cursor: default;
-        }
+        }*/
         svg {
+            width: 100%;
+            height: 300px;
             background-color: #efefef;
             padding: 10px;
             margin-bottom: 20px;
-            width: 100%;
-            height: 300px;
+        }
+        svg g {
+            cursor: pointer;
+        }
+        svg g rect.box {
+            width: 100px;
+            height: 50px;
+            transform: translate(-50px, -25px);
+            stroke-width: 2px;
+        }
+        svg g rect.active {
+            fill: white;
+            stroke: black;
+        }
+        svg g:hover rect.active {
+            fill: black;
+        }
+        svg g rect.passive {
+            stroke: #5454ff;
+            fill: #dedeff;
+        }
+        svg g text.name {
+            transform: translate(0, -8px);
+        }
+        svg g text.value {
+            transform: translate(0, 8px);
+        }
+        svg g text {
+            text-anchor: middle;
+            dominant-baseline: central;
+        }
+        svg g:hover text.active {
+            fill: white;
+        }
+        svg line {
+            stroke: black;
+            stroke-width: 2px;
+        }
+        svg text.line {
+            font-size: small;
+        }
+        svg text.up {
+            transform: translate(0, -18px);
+            text-anchor: middle;
+            dominant-baseline: text-before-edge;
+        }
+        svg text.left {
+            transform: translate(-4px, 0);
+            text-anchor: end;
+            dominant-baseline: central;
+        }
+        svg text.right {
+            transform: translate(4px, 0);
+            text-anchor: start;
+            dominant-baseline: central;
         }
         p {
             text-align: justify;
@@ -53,109 +107,12 @@
 <body>
 <div id="wrap">
 
-<svg>
-    <defs>
-        <path id="defarrow" d="M5,15 l0,-30 20,15 -20,15 z" />
-        <!-- d="M30.5,15.5 l0,-30 5,0 20,15 -20,15 z" -->
-    </defs>
-
-    <rect id="box0" class="commodity-square" x="0" y="0" />
-    <rect id="box1" class="commodity-square" x="349" y="0" />
-    <rect id="box2" class="commodity-square" x="349" y="249" />
-    <rect id="box3" class="commodity-square" x="0" y="249" />
-
-    <text id="name0" class="commodity-name" x="50" y="22">Wheat</text>
-    <text id="value0" class="commodity-value" x="50" y="38">0 g</text>
-
-    <text id="name1" class="commodity-name" x="400" y="22">Wine</text>
-    <text id="value1" class="commodity-value" x="400" y="38">0 l</text>
-
-    <text id="name2" class="commodity-name" x="400" y="272">Flour</text>
-    <text id="value2" class="commodity-value" x="400" y="288">0 kg</text>
-
-    <text id="name3" class="commodity-name" x="50" y="272">Salt</text>
-    <text id="value3" class="commodity-value" x="50" y="288">0 g</text>
-
-    <!-- 0 <-> 1 -->
-
-<!-- experiments: draw a line between the opposite triangles/arrows -->
-<!--    <line x1="105" y1="25" x2="295" y2="25" stroke="black" stroke-width="2" />-->
-<!--    <rect x="100.5" y="19.5" width="200" height="14" stroke="black" stroke-width="1" fill="white" />-->
-
-    <g transform="translate(140,25)">
-        <use class="arrow" xlink:href="#defarrow" transform="scale(-1,1)" onclick="arrow_click(1,0)" />
-        <text id="arrow10" class="arrow-text" text-anchor="start" dominant-baseline="central">1 g  = 1 l</text>
-    </g>
-    <g transform="translate(310,25)">
-        <use class="arrow" xlink:href="#defarrow" onclick="arrow_click(0,1)" />
-        <text id="arrow01" class="arrow-text" text-anchor="end" dominant-baseline="central">1 l = 1 g</text>
-    </g>
-
-
-    <!-- 1 <-> 2 -->
-
-    <g transform="translate(385,90)">
-        <use class="arrow" xlink:href="#defarrow" transform="rotate(90), scale(-1,1)" onclick="arrow_click(2,1)" />
-        <text id="arrow21" class="arrow-text" text-anchor="middle" dominant-baseline="text-before-edge">1 l = 1 kg</text>
-    </g>
-    <g transform="translate(385,210)">
-        <use class="arrow" xlink:href="#defarrow" transform="rotate(90)" onclick="arrow_click(1,2)" />
-        <text id="arrow12" class="arrow-text" text-anchor="middle" dominant-baseline="text-after-edge">1 kg  = 1 l</text>
-    </g>
-
-    <!-- 0 <-> 2 -->
-
-    <g transform="translate(125,75)">
-        <use class="arrow" xlink:href="#defarrow" transform="rotate(40), scale(-1,1)" onclick="arrow_click(2,0)" />
-        <text id="arrow20" class="arrow-text" text-anchor="start" dominant-baseline="text-before-edge">1 g  = 1 kg</text>
-    </g>
-    <g transform="translate(320,225)">
-        <use class="arrow" xlink:href="#defarrow" transform="rotate(40)" onclick="arrow_click(0,2)" />
-        <text id="arrow02" class="arrow-text" text-anchor="end" dominant-baseline="text-after-edge">1 kg = 1 g</text>
-    </g>
-
-    <g id="fourth-group">
-    <!-- 2 <-> 3 -->
-
-    <g transform="translate(140,275)">
-        <use class="arrow" xlink:href="#defarrow" transform="scale(-1,1)" onclick="arrow_click(2,3)" />
-        <text id="arrow23" class="arrow-text" text-anchor="start" dominant-baseline="central">1 g  = 1 kg</text>
-    </g>
-    <g transform="translate(310,275)">
-        <use class="arrow" xlink:href="#defarrow" onclick="arrow_click(2,3)" />
-        <text id="arrow32" class="arrow-text" text-anchor="end" dominant-baseline="central">1 kg = 1 g</text>
-    </g>
-
-    <!-- 0 <-> 3 -->
-
-    <g transform="translate(60,90)">
-        <use class="arrow" xlink:href="#defarrow" transform="rotate(90), scale(-1,1)" onclick="arrow_click(3,0)" />
-        <text id="arrow30" class="arrow-text" text-anchor="middle" dominant-baseline="text-before-edge">1 g = 1 g</text>
-    </g>
-    <g transform="translate(60,210)">
-        <use class="arrow" xlink:href="#defarrow" transform="rotate(90)" onclick="arrow_click(0,3)" />
-        <text id="arrow03" class="arrow-text" text-anchor="middle" dominant-baseline="text-after-edge">1 g  = 1 g</text>
-    </g>
-
-    <!-- 1 <-> 3 -->
-
-    <g transform="translate(320,75)">
-        <use class="arrow" xlink:href="#defarrow" transform="rotate(-40)" onclick="arrow_click(3,1)" />
-        <text id="arrow31" class="arrow-text" text-anchor="end" dominant-baseline="text-before-edge">1 l  = 1 g</text>
-    </g>
-    <g transform="translate(125,225)">
-        <use class="arrow" xlink:href="#defarrow" transform="rotate(-40), scale(-1,1)" onclick="arrow_click(1,3)" />
-        <text id="arrow13" class="arrow-text" text-anchor="start" dominant-baseline="text-after-edge">1 g = 1 l</text>
-    </g>
-    </g>
-</svg>
+<svg />
 
 <p>Difficulty: 
 <select onchange="set_difficulty(this.value)">
-  <option value="noob">Introduction</option>
-  <option value="easy">Easy</option>
-  <option value="medium">Medium</option>
-  <option value="hard">Hard</option>
+  <option value="3">Easy</option>
+  <option value="4">Hard</option>
 </select>
 </p>
 
@@ -164,10 +121,7 @@
 <p>This game illustrates how people can make money on arbritage. This is a barter economy (no money), but you could easily see how this would work in the currency market for instance (where too there is no measure of account and so can be seen as a barter economy) or even the stockmarket. In the long run, this bidding of prices up and down regulates prices.</p>
 </div>
 
-
 <script>
-// The traded commodities can change at each initialization
-
 var commodities = [
     [
         ['Ivory', 'Wine', 'Spices', 'Silk'],
@@ -189,14 +143,12 @@ var commodities = [
     ],
 ];
 
-var commodity = commodities[Math.floor(Math.random() * commodities.length)];
+var placements = [
+    [[50, 25], [400, 25], [225, 275]],
+    [[50, 25], [400, 25], [50, 275], [400, 275]],
+];
 
-document.getElementById('name0').textContent = commodity[0][0];
-document.getElementById('name1').textContent = commodity[0][1];
-document.getElementById('name2').textContent = commodity[0][2];
-document.getElementById('name3').textContent = commodity[0][3];
-
-document.getElementById('goal').innerHTML = commodity[4] + ' You must obtain 40 units of each ' + commodity[3] + ' by finding arbritage opportunities to finish the game.';
+var svg = document.getElementsByTagName('svg')[0];
 
 function randint(min, max) {
     return Math.floor((Math.random() * (max-min+1)) + min);
@@ -208,85 +160,134 @@ function greatest_common_divisor(a, b) {  // euclid's algorithm
     return greatest_common_divisor(b, a % b);
 }
 
-// here we declare values and prices arrays between the commodities
-// values = quantities
+var commodity;
+var quantities, prices;
+var groups, text, active;
 
-var values, prices;
+function init(nodes) {
+    // initialize variables
 
-function init(level) {
-    if(level == 'noob' || level == 'easy')
-        values = new Array(3);
-    else
-        values = new Array(4);
+    quantities = new Array(nodes);
+    quantities[0] = 100;
+    for(var i = 1; i < nodes; i++)
+        quantities[i] = 0;
 
-    // set fourth box visible?
-    var visible = values.length == 3 ? 'hidden' : 'visible';
-    document.getElementById('box3').style.visibility = visible
-    document.getElementById('name3').style.visibility = visible
-    document.getElementById('value3').style.visibility = visible
-    document.getElementById('fourth-group').style.visibility = visible
-
-    for(var i = 0; i < values.length; i++)
-        values[i] = randint(10, 30);
-
-    prices = new Array(values.length);
-
-    if(level == 'noob') {
-        prices[0] = [1, 2, 3];
-        prices[1] = [3, 1, 1];
-        prices[2] = [2, 1, 1];
-    }
-    else
-        for(var i = 0; i < values.length; i++) {
-            prices[i] = new Array(values.length);
-            for(var j = 0; j < values.length; j++) {
-                if(i == j)
-                    prices[i][j] = 1;
-                else {
-                    prices[i][j] = randint(1, 5);
-                    if(i > j) {
-                        var gcd = greatest_common_divisor(prices[i][j], prices[j][i]);
-                        prices[i][j] /= gcd;
-                        prices[j][i] /= gcd;
-                    }
+    prices = new Array(nodes);
+    for(var i = 0; i < nodes; i++) {
+        prices[i] = new Array(nodes);
+        for(var j = 0; j < nodes; j++) {
+            if(i == j)
+                prices[i][j] = 1;
+            else {
+                prices[i][j] = randint(1, 5);
+                if(i > j) {
+                    var gcd = greatest_common_divisor(prices[i][j], prices[j][i]);
+                    prices[i][j] /= gcd;
+                    prices[j][i] /= gcd;
                 }
             }
         }
+    }
+
+    // initialize graphics
+
+    while(svg.lastChild)
+        svg.removeChild(svg.lastChild);
+
+    var pos = placements[nodes-3];
+    commodity = commodities[Math.floor(Math.random() * commodities.length)];
+    groups = new Array(nodes);
+    text = new Array(nodes);
+    active = 0;
+
+    for(var i = 0; i < nodes; i++) {
+        for(var j = i+1; j < nodes; j++) {
+            var e = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            e.setAttribute('x1', pos[i][0]);
+            e.setAttribute('y1', pos[i][1]);
+            e.setAttribute('x2', pos[j][0]);
+            e.setAttribute('y2', pos[j][1]);
+            svg.appendChild(e);
+
+            e = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            e.classList.add('line');
+            if(pos[i][1] == pos[j][1])
+                e.classList.add('up');
+            else if(pos[i][0] < 450/2)
+                e.classList.add(pos[i][0] == pos[j][0] ? 'right' : 'left');
+            else
+                e.classList.add(pos[i][0] == pos[j][0] ? 'left' : 'right');
+            if(commodity[2] == 'left')
+                e.textContent = commodity[1][i] + ' ' + prices[j][i] + ' = ' + commodity[1][j] + ' ' + prices[i][j];
+            else
+                e.textContent = prices[j][i] + ' ' + commodity[1][i] + ' = ' + prices[i][j] + ' ' + commodity[1][j];
+            e.setAttribute('x', (pos[i][0]+pos[j][0])/2);
+            e.setAttribute('y', (pos[i][1]+pos[j][1])/2);
+            svg.appendChild(e);
+        }
+
+        var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        var status = i == active ? 'passive' : 'active';
+        g.addEventListener('click', function() { node_clicked(event); }, false);
+
+        var e = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        e.classList.add('box');
+        e.classList.add(status);
+        e.setAttribute('x', pos[i][0]);
+        e.setAttribute('y', pos[i][1]);
+        g.appendChild(e);
+
+        e = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        e.classList.add('name');
+        e.classList.add(status);
+        e.textContent = commodity[0][i];
+        e.setAttribute('x', pos[i][0]);
+        e.setAttribute('y', pos[i][1]);
+        g.appendChild(e);
+
+        e = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        e.classList.add('value');
+        e.classList.add(status);
+        e.textContent = '0 ' + commodity[1][i];
+        e.setAttribute('x', pos[i][0]);
+        e.setAttribute('y', pos[i][1]);
+        g.appendChild(e);
+
+        text[i] = e;
+        groups[i] = g;
+        svg.appendChild(g);
+    }
+
+    document.getElementById('goal').innerHTML = commodity[4] + ' You must obtain 40 units of each ' + commodity[3] + ' by finding arbritage opportunities to finish the game.';
 }
 
 function sync() {
-    // values
-    for(var i = 0; i < values.length; i++) {
-        var e = document.getElementById('value' + i);
+    for(var i = 0; i < text.length; i++) {
         if(commodity[2] == 'left')
-            e.textContent = commodity[1][i] + ' ' + values[i];
+            text[i].textContent = commodity[1][i] + ' ' + quantities[i].toFixed();
         else
-            e.textContent = values[i] + ' ' + commodity[1][i];
-        var e = document.getElementById('box' + i);
-        e.style.fill = values[i] >= 40 ? '#9effbc' : 'white';
-    }
-    // prices
-    for(var i = 0; i < values.length; i++)
-        for(var j = 0; j < values.length; j++) {
-            if(i == j)
-                continue;
-            var e = document.getElementById('arrow' + i + '' + j);
-            if(commodity[2] == 'left')
-                e.textContent = commodity[1][j] + ' ' + prices[i][j] + ' = ' + commodity[1][i] + ' ' + prices[j][i];
-            else
-                e.textContent = prices[i][j] + ' ' + commodity[1][j] + ' = ' + prices[j][i] + ' ' + commodity[1][i];
+            text[i].textContent = quantities[i].toFixed() + ' ' + commodity[1][i];
+        for(var k = 0; k < groups[i].children.length; k++) {
+            groups[i].children[k].classList.remove(i == active ? 'active' : 'passive');
+            groups[i].children[k].classList.add(i == active ? 'passive' : 'active');
         }
+    }
 }
 
-init('noob');
+init(3);
 sync();
 
-function arrow_click(i, j) {
-    if(prices[j][i] <= values[i]) {
-        values[j] += prices[i][j];
-        values[i] -= prices[j][i];
-        sync();
-    }
+function node_clicked(event) {
+    var i = active;
+    var j;
+    // ugly way to get id of clicked object
+    for(j = 0; ; j++)
+        if(groups[j] == event.target.parentNode)
+            break;
+    quantities[j] = (prices[i][j] * quantities[i]) / prices[j][i];
+    quantities[i] = 0;
+    active = j;
+    sync();
 }
 
 function set_difficulty(level) {
