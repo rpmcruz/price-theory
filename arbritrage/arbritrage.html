@@ -7,35 +7,6 @@
             width: 450px;
             margin: 0 auto;
         }
-/*        .commodity-square {
-            width: 100px;
-            height: 50px;
-            stroke: black;
-            stroke-width: 2px;
-            fill: white;
-            shape-rendering: crispEdges;
-        }
-        .commodity-name {
-            text-anchor: middle;
-            font-weight: bold;
-        }
-        .commodity-value {
-            text-anchor: middle;
-        }
-        .arrow {
-            stroke: black;
-            stroke-width: 2px;
-            fill: white;
-        }
-        .arrow:hover {
-            fill: black;
-            cursor: pointer;
-        }
-        .arrow-text {
-            fill: black;
-            font-size: small;
-            cursor: default;
-        }*/
         svg {
             width: 100%;
             height: 300px;
@@ -109,10 +80,12 @@
 
 <svg />
 
-<p>Difficulty: 
+<p>Number of nodes:
 <select onchange="set_difficulty(this.value)">
-  <option value="3">Easy</option>
-  <option value="4">Hard</option>
+  <option value="3">3</option>
+  <option value="4" selected>4</option>
+  <option value="5">5</option>
+  <option value="6">6</option>
 </select>
 </p>
 
@@ -143,11 +116,11 @@ var commodities = [
     ],
 ];
 
-var placements = [
+/*var placements = [
     [[50, 25], [400, 25], [225, 275]],
     [[50, 25], [400, 25], [50, 275], [400, 275]],
 ];
-
+*/
 var svg = document.getElementsByTagName('svg')[0];
 
 function randint(min, max) {
@@ -172,30 +145,68 @@ function init(nodes) {
     for(var i = 1; i < nodes; i++)
         quantities[i] = 0;
 
+    // initialization of prices matrix is tricky: we only want one arbritrage
+    // opportunity which means prices assymetry through only one pathway
+
     prices = new Array(nodes);
+    // 1. set all one
     for(var i = 0; i < nodes; i++) {
         prices[i] = new Array(nodes);
-        for(var j = 0; j < nodes; j++) {
-            if(i == j)
-                prices[i][j] = 1;
-            else {
-                prices[i][j] = randint(1, 5);
-                if(i > j) {
-                    var gcd = greatest_common_divisor(prices[i][j], prices[j][i]);
-                    prices[i][j] /= gcd;
-                    prices[j][i] /= gcd;
-                }
-            }
-        }
+        for(var j = 0; j < nodes; j++)
+            prices[i][j] = 1;
     }
+    // 2. randomize it: we must randomize while keeping pathways symmetric
+    for(var i = 0; i < nodes; i++)
+        for(var j = 0; j < nodes; j++)
+            if(i != j) {
+                var u = Math.floor(Math.random() * 4);
+                prices[i][j] += u;
+                for(var l = 0; l < nodes; l++)
+                    if(l != i)
+                        prices[l][j] += u;
+            }
+    // 3. benefit one price so people can find an arbritrage pathway
+    var i = Math.floor(Math.random() * nodes);
+    var j = i;
+    while(i == j)
+        j = Math.floor(Math.random() * nodes);
+    prices[i][j] += 1 + Math.floor(Math.random() * 2);
+    // 4. normalize prices (dividing by greatest common divisor)
+    for(var i = 0; i < nodes; i++)
+        for(var j = 0; j < nodes; j++)
+            if(i != j) {
+                var gcd = greatest_common_divisor(prices[i][j], prices[j][i]);
+                prices[i][j] /= gcd;
+                prices[j][i] /= gcd;
+            }
 
     // initialize graphics
 
     while(svg.lastChild)
         svg.removeChild(svg.lastChild);
 
-    var pos = placements[nodes-3];
+    var pos = new Array(nodes);
+    // setup arrangement of nodes
+    for(var i = 0; i < nodes; i++) {
+        pos[i] = new Array(2);
+        pos[i][0] = (Math.sin(2*Math.PI*i/nodes - Math.PI/4)+1) * 225;
+        pos[i][1] = 300 - ((Math.cos(2*Math.PI*i/nodes - Math.PI/4)+1) * 150);
+        //console.log(i + ' pos: ' + pos[i][0] + ' ' + pos[i][1]);
+    }
+
     commodity = commodities[Math.floor(Math.random() * commodities.length)];
+    // TEMP: put commodity
+    commodity = new Array(4);
+    commodity[0] = new Array(nodes);
+    commodity[1] = new Array(nodes);
+    for(var k = 0; k < nodes; k++) {
+        commodity[0][k] = String.fromCharCode(k + 65)+String.fromCharCode(k + 65)+String.fromCharCode(k + 65);
+        commodity[1][k] = String.fromCharCode(k + 97);
+    }
+    commodity[2] = 'right';
+    commodity[3] = '(unit)';
+    commodity[4] = 'TODO: some introduction.';
+
     groups = new Array(nodes);
     text = new Array(nodes);
     active = 0;
@@ -274,7 +285,7 @@ function sync() {
     }
 }
 
-init(3);
+init(4);
 sync();
 
 function node_clicked(event) {
