@@ -160,21 +160,6 @@ function getLine(X, Y) {
 
 Xs = fisher_yates(4*4);
 
-function fisher_yates(n) {
-    // see https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
-    X = new Array(n);
-    for(var i = 0; i < n; i++)
-        X[i] = i;
-    for(var i = 0; i < n-2; i++) {
-        var j = Math.floor(Math.random()*(n-i));
-        // exchange a[i] and a[i+j]
-        var t = X[i];
-        X[i] = X[i+j];
-        X[i+j] = t;
-    }
-    return X;
-}
-
 function getX(pt) {
     var X1 = Math.floor(Xs[pt] / 4);
     var X2 = Xs[pt] % 4;
