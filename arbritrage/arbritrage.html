@@ -187,14 +187,22 @@ function init(nodes) {
 
     var pos = new Array(nodes);
     // setup arrangement of nodes
-    for(var i = 0; i < nodes; i++) {
-        pos[i] = new Array(2);
-        pos[i][0] = (Math.sin(2*Math.PI*i/nodes - Math.PI/4)+1) * 225;
-        pos[i][1] = 300 - ((Math.cos(2*Math.PI*i/nodes - Math.PI/4)+1) * 150);
-        //console.log(i + ' pos: ' + pos[i][0] + ' ' + pos[i][1]);
+    if(nodes == 3) {  // special case, triangle
+        pos[0] = [225, 20];
+        pos[1] = [45, 300-20];
+        pos[2] = [450-45, 300-20];
     }
+    else
+        for(var i = 0; i < nodes; i++) {
+            var dx = Math.cos(Math.PI/2 + i*2*Math.PI/nodes);
+            var dy = Math.sin(Math.PI/2 + i*2*Math.PI/nodes);
+            var norm = Math.max(Math.abs(dx), Math.abs(dy));
+            pos[i] = new Array(2);
+            pos[i][0] = 225 + (255-75)*(dx/norm);
+            pos[i][1] = 300 - (150 + (150-20)*(dy/norm));
+        }
 
-    commodity = commodities[Math.floor(Math.random() * commodities.length)];
+    //commodity = commodities[Math.floor(Math.random() * commodities.length)];
     // TEMP: put commodity
     commodity = new Array(4);
     commodity[0] = new Array(nodes);
