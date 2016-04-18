@@ -47,27 +47,15 @@
         svg g:hover text.active {
             fill: white;
         }
+        svg g .visited {
+            fill: gray;
+        }
         svg line {
             stroke: black;
             stroke-width: 2px;
         }
         svg text.line {
             font-size: small;
-        }
-        svg text.up {
-            transform: translate(0, -18px);
-            text-anchor: middle;
-            dominant-baseline: text-before-edge;
-        }
-        svg text.left {
-            transform: translate(-4px, 0);
-            text-anchor: end;
-            dominant-baseline: central;
-        }
-        svg text.right {
-            transform: translate(4px, 0);
-            text-anchor: start;
-            dominant-baseline: central;
         }
         p {
             text-align: justify;
@@ -182,9 +170,6 @@ function init(nodes) {
 
     // initialize graphics
 
-    while(svg.lastChild)
-        svg.removeChild(svg.lastChild);
-
     var pos = new Array(nodes);
     // setup arrangement of nodes
     if(nodes == 3) {  // special case, triangle
@@ -215,6 +200,9 @@ function init(nodes) {
     commodity[3] = '(unit)';
     commodity[4] = 'TODO: some introduction.';
 
+    while(svg.lastChild)  // clear
+        svg.removeChild(svg.lastChild);
+
     groups = new Array(nodes);
     text = new Array(nodes);
     active = 0;
@@ -227,21 +215,35 @@ function init(nodes) {
             e.setAttribute('x2', pos[j][0]);
             e.setAttribute('y2', pos[j][1]);
             svg.appendChild(e);
-
-            e = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        }
+        for(var j = 0; j < nodes; j++) {
+            if(i == j) continue;
+            var e = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             e.classList.add('line');
-            if(pos[i][1] == pos[j][1])
-                e.classList.add('up');
-            else if(pos[i][0] < 450/2)
-                e.classList.add(pos[i][0] == pos[j][0] ? 'right' : 'left');
-            else
-                e.classList.add(pos[i][0] == pos[j][0] ? 'left' : 'right');
+            var t;
             if(commodity[2] == 'left')
-                e.textContent = commodity[1][i] + ' ' + prices[j][i] + ' = ' + commodity[1][j] + ' ' + prices[i][j];
+                t = commodity[1][i] + ' ' + prices[j][i] + ' = ' + commodity[1][j] + ' ' + prices[i][j];
             else
-                e.textContent = prices[j][i] + ' ' + commodity[1][i] + ' = ' + prices[i][j] + ' ' + commodity[1][j];
-            e.setAttribute('x', (pos[i][0]+pos[j][0])/2);
-            e.setAttribute('y', (pos[i][1]+pos[j][1])/2);
+                t = prices[j][i] + ' ' + commodity[1][i] + ' = ' + prices[i][j] + ' ' + commodity[1][j];
+            e.textContent = t;
+            var norm = Math.sqrt(Math.pow(pos[i][0]-pos[j][0], 2) + Math.pow(pos[i][1]-pos[j][1], 2));
+            e.setAttribute('x', pos[i][0] + 70*(pos[j][0]-pos[i][0])/norm);
+            e.setAttribute('y', pos[i][1] + 40*(pos[j][1]-pos[i][1])/norm);
+
+            if(pos[i][1]+1 < pos[j][1])  // up
+                e.setAttribute('dominant-baseline', 'text-before-edge');
+            else if(pos[i][1]-1 > pos[j][1])  // down
+                e.setAttribute('dominant-baseline', 'text-after-edge');
+            else
+                e.setAttribute('dominant-baseline', 'central');
+
+            if(pos[i][0]+1 < pos[j][0])  // left
+                e.setAttribute('text-anchor', 'start');
+            else if(pos[i][0]-1 > pos[j][0])  // right
+                e.setAttribute('text-anchor', 'end');
+            else
+                e.setAttribute('text-anchor', 'middle');
+
             svg.appendChild(e);
         }
 
@@ -297,6 +299,8 @@ init(4);
 sync();
 
 function node_clicked(event) {
+    groups[active].classList.add('visited');
+
     var i = active;
     var j;
     // ugly way to get id of clicked object
