@@ -10,7 +10,7 @@
         svg {
             width: 100%;
             height: 300px;
-            background-color: #efefef;
+            background-color: rgb(246,246,246);
             padding: 10px;
             margin-bottom: 20px;
         }
@@ -47,27 +47,17 @@
         svg g:hover text.active {
             fill: white;
         }
-        svg line {
-            stroke: black;
-            stroke-width: 2px;
+        svg g .visited {
+            fill: gray;
+        }
+        svg polygon {
+/*            fill: rgb(100,100,100);*/
+            fill: black;
+            fill-opacity: 0.4;
         }
         svg text.line {
+            fill: white;
             font-size: small;
-        }
-        svg text.up {
-            transform: translate(0, -18px);
-            text-anchor: middle;
-            dominant-baseline: text-before-edge;
-        }
-        svg text.left {
-            transform: translate(-4px, 0);
-            text-anchor: end;
-            dominant-baseline: central;
-        }
-        svg text.right {
-            transform: translate(4px, 0);
-            text-anchor: start;
-            dominant-baseline: central;
         }
         p {
             text-align: justify;
@@ -94,6 +84,7 @@
 <p>This game illustrates how people can make money on arbritage. This is a barter economy (no money), but you could easily see how this would work in the currency market for instance (where too there is no measure of account and so can be seen as a barter economy) or even the stockmarket. In the long run, this bidding of prices up and down regulates prices.</p>
 </div>
 
+<script src="vec.js"></script>
 <script>
 var commodities = [
     [
@@ -133,9 +124,20 @@ function greatest_common_divisor(a, b) {  // euclid's algorithm
     return greatest_common_divisor(b, a % b);
 }
 
+function norm2(pt0, pt1) {
+    return Math.sqrt(Math.pow(pt0[0]-pt1[0], 2) + Math.pow(pt0[1]-pt1[1], 2));
+}
+
 var commodity;
 var quantities, prices;
 var groups, text, active;
+
+function lineBetweenNodes(A, B) {
+    var diff = A.sub(B).normalize();
+    A = A.add(diff.mult(new Vec(-70, -40)));
+    B = B.add(diff.mult(new Vec(+70, +40)));
+    return [A, B];
+}
 
 function init(nodes) {
     // initialize variables
@@ -182,24 +184,21 @@ function init(nodes) {
 
     // initialize graphics
 
-    while(svg.lastChild)
-        svg.removeChild(svg.lastChild);
-
     var pos = new Array(nodes);
     // setup arrangement of nodes
     if(nodes == 3) {  // special case, triangle
-        pos[0] = [225, 20];
-        pos[1] = [45, 300-20];
-        pos[2] = [450-45, 300-20];
+        pos[0] = new Vec(225, 20);
+        pos[1] = new Vec(45, 300-20);
+        pos[2] = new Vec(450-45, 300-20);
     }
     else
         for(var i = 0; i < nodes; i++) {
             var dx = Math.cos(Math.PI/2 + i*2*Math.PI/nodes);
             var dy = Math.sin(Math.PI/2 + i*2*Math.PI/nodes);
             var norm = Math.max(Math.abs(dx), Math.abs(dy));
-            pos[i] = new Array(2);
-            pos[i][0] = 225 + (255-75)*(dx/norm);
-            pos[i][1] = 300 - (150 + (150-20)*(dy/norm));
+            pos[i] = new Vec(
+                225 + (255-75)*(dx/norm),
+                300 - (150 + (150-20)*(dy/norm)));
         }
 
     //commodity = commodities[Math.floor(Math.random() * commodities.length)];
@@ -215,33 +214,77 @@ function init(nodes) {
     commodity[3] = '(unit)';
     commodity[4] = 'TODO: some introduction.';
 
+    while(svg.lastChild)  // clear
+        svg.removeChild(svg.lastChild);
+
     groups = new Array(nodes);
     text = new Array(nodes);
     active = 0;
 
     for(var i = 0; i < nodes; i++) {
         for(var j = i+1; j < nodes; j++) {
-            var e = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            e.setAttribute('x1', pos[i][0]);
-            e.setAttribute('y1', pos[i][1]);
-            e.setAttribute('x2', pos[j][0]);
-            e.setAttribute('y2', pos[j][1]);
-            svg.appendChild(e);
+            var e = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
 
-            e = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            var pts = lineBetweenNodes(pos[i], pos[j]);
+            var diff = pos[i].sub(pos[j]).normalize();
+            var ortho = diff.orthogonal();
+
+            var p0 = prices[j][i];
+            var p1 = prices[i][j];
+            var w0 = 14*(2*p0)/(p0+p1);
+            var w1 = 14*(2*p1)/(p0+p1);
+            var pts = [
+                pts[0].add(ortho.mult(w0)),
+                pts[0].add(ortho.mult(-w0)),
+                pts[1].add(ortho.mult(-w1)),
+                pts[1].add(ortho.mult(w1))];
+            var s = '';
+            for(var k = 0; k < pts.length; k++) {
+                if(k > 0)
+                    s += ',';
+                s += pts[k].x + ',' + pts[k].y;
+            }
+            e.setAttribute('points', s);
+            svg.appendChild(e);
+        }
+        for(var j = 0; j < nodes; j++) {
+            if(i == j) continue;
+            var pts = lineBetweenNodes(pos[i], pos[j]);
+
+            var e = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             e.classList.add('line');
-            if(pos[i][1] == pos[j][1])
-                e.classList.add('up');
-            else if(pos[i][0] < 450/2)
-                e.classList.add(pos[i][0] == pos[j][0] ? 'right' : 'left');
+
+            var p1, p2;
+            if(commodity[2] == 'left') {
+                p1 = commodity[1][i] + ' ' + prices[j][i];
+                p2 = commodity[1][j] + ' ' + prices[i][j];
+            }
+            else {
+                p1 = prices[j][i] + ' ' + commodity[1][i];
+                p2 = prices[i][j] + ' ' + commodity[1][j];
+            }
+
+
+            var t = p1;
+            e.textContent = t;
+
+            e.setAttribute('x', pts[0].x);
+            e.setAttribute('y', pts[0].y);
+
+            if(pos[i].y+1 < pos[j].y)  // up
+                e.setAttribute('dominant-baseline', 'text-before-edge');
+            else if(pos[i].y-1 > pos[j].y)  // down
+                e.setAttribute('dominant-baseline', 'text-after-edge');
             else
-                e.classList.add(pos[i][0] == pos[j][0] ? 'left' : 'right');
-            if(commodity[2] == 'left')
-                e.textContent = commodity[1][i] + ' ' + prices[j][i] + ' = ' + commodity[1][j] + ' ' + prices[i][j];
+                e.setAttribute('dominant-baseline', 'central');
+
+            if(pos[i].x+1 < pos[j].x)  // left
+                e.setAttribute('text-anchor', 'start');
+            else if(pos[i].x-1 > pos[j].x)  // right
+                e.setAttribute('text-anchor', 'end');
             else
-                e.textContent = prices[j][i] + ' ' + commodity[1][i] + ' = ' + prices[i][j] + ' ' + commodity[1][j];
-            e.setAttribute('x', (pos[i][0]+pos[j][0])/2);
-            e.setAttribute('y', (pos[i][1]+pos[j][1])/2);
+                e.setAttribute('text-anchor', 'middle');
+
             svg.appendChild(e);
         }
 
@@ -252,24 +295,24 @@ function init(nodes) {
         var e = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
         e.classList.add('box');
         e.classList.add(status);
-        e.setAttribute('x', pos[i][0]);
-        e.setAttribute('y', pos[i][1]);
+        e.setAttribute('x', pos[i].x);
+        e.setAttribute('y', pos[i].y);
         g.appendChild(e);
 
         e = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         e.classList.add('name');
         e.classList.add(status);
         e.textContent = commodity[0][i];
-        e.setAttribute('x', pos[i][0]);
-        e.setAttribute('y', pos[i][1]);
+        e.setAttribute('x', pos[i].x);
+        e.setAttribute('y', pos[i].y);
         g.appendChild(e);
 
         e = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         e.classList.add('value');
         e.classList.add(status);
         e.textContent = '0 ' + commodity[1][i];
-        e.setAttribute('x', pos[i][0]);
-        e.setAttribute('y', pos[i][1]);
+        e.setAttribute('x', pos[i].x);
+        e.setAttribute('y', pos[i].y);
         g.appendChild(e);
 
         text[i] = e;
@@ -297,6 +340,8 @@ init(4);
 sync();
 
 function node_clicked(event) {
+    groups[active].classList.add('visited');
+
     var i = active;
     var j;
     // ugly way to get id of clicked object
