@@ -1,6 +1,12 @@
 function Vec(x, y) {
-    this.x = x;
-    this.y = y;
+    if(y == undefined) {
+        this.x = x.x;
+        this.y = x.y;
+    }
+    else {
+        this.x = x;
+        this.y = y;
+    }
 }
 
 Vec.prototype.add = function(other) {
