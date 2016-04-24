@@ -16,11 +16,12 @@ function City(id, name, x, y) {
     this.y = 275-y;
     // economic variables
     // population (pop) -- total laborers
-    this.pop = Math.round(gauss_rand(1000, 200));
+    this.pop = Math.round(randn(1000, 200)[0]);
     // productivity (z) -- products-per-laborer
+    var r = randn(1, 0.1);
     this.z = new Array(commodities);
     for(var c = 0; c < commodities; c++)
-        this.z[c] = Math.max(0.1, gauss_rand(1, 0.1));
+        this.z[c] = Math.max(0.1, r[c]);
     this.league = -1;
 }
 

@@ -121,11 +121,11 @@
 // S(P) = beta0 + beta1.X1 + beta3.X3
 // D(P) = beta0 + beta2.X2 + beta3.X3
 
-var S_beta0 = gauss_rand(-10, 2);
-var S_beta1 = gauss_rand(2, 1);
+var S_beta0 = randn(-10, 2)[0];
+var S_beta1 = randn(2, 1)[0];
 
-var D_beta0 = gauss_rand(60, 2);
-var D_beta2 = gauss_rand(4, 1);
+var D_beta0 = randn(60, 2)[0];
+var D_beta2 = randn(4, 1)[0];
 
 function Price(X1, X2) {
     return 0.5 * ((D_beta0 + D_beta2*X2) - (S_beta0 + S_beta1*X1));

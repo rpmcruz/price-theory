@@ -69,7 +69,7 @@ var counter = 0;
 var stupid = 0;
 
 function Cart() {
-    this.n = Math.round(Math.max(5, gauss_rand(25, 10)));
+    this.n = Math.round(Math.max(5, randn(25, 10)[0]));
     var line = Math.floor((Math.random()*queues));
     this.x = 2;
     this.y = (line+0.5) * queue_h;
