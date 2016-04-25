@@ -836,8 +836,6 @@ const _srcXor = 2, _patXor = 10, _patCopy = 8, _centerJust = 2, _monaco = 4, _no
 				}
 				//next check  for collision with checkout counter
 				if (gShopper[Shp].SLoc.ih > igCheckouth - gShopperWidth) {
-				    // FIXME: there is some kind of bug here
-				    // strangely, there wasn't one in the java version...
 					var AisleMiss =
 						gCheckout[gShopper[Shp].iSTargetLine].iCv -
 						    gShopper[Shp].SLoc.iv + _COffset;
