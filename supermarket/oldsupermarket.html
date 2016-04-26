@@ -24,207 +24,8 @@ Your browser does not support the HTML5 canvas tag.
 </canvas>
 </div>
 
-<!--<script src="../utils/vec.js"></script>-->
+<script src="../utils/vec.js"></script>
 <script>
-var canvas = document.getElementById('mycanvas');
-var ctx = canvas.getContext('2d');
-
-// ricardo: not sure why this aren't declared, but they
-// don't seem to be from ZBasic:
-const _fieldKeyPressed = 16;
-const _disable = 0, _enable = 1, _checked = 2;
-const _srcXor = 2, _patXor = 10, _patCopy = 8, _centerJust = 2, _monaco = 4, _noframed = 0;
-
-// Supermarket.GLBL
-
-//===============================================================================
-//         DIMension your app's globals & equate your app's constants here
-//===============================================================================
-//
-
-	const _ShopperMax = 50;
-	const _WellMax = 20;
-	const _CheckoutMax = 10;
-	const _WellSpeedMax = 1000;
-	const _WellSpeedMin = 100;
-	const _CartSpeedMax = 4;
-	const _CartSpeedMin = 1;
-	const _CkOutSpeedMin = 0;
-	const _CkOutSpeedMax = 3;
-	const _SCycle = 2;	//inverse of fraction of shoppers that search each cycle                                          //
-//
-	const _ShopperHt = 20;
-	const _ShopperWd = 8;
-	const _Textdx = 5;	//xDisplacement in dItem relative to cart
-	const _Textdy = 10;	//yDisplacement in dItem relative to cart
-	const _TopCheckout = 10;
-	const _CheckoutSeparation = 44;	//vertical distance between checkouts
-	const _COffset = 31;	//v distance between checkout top and opening top
-//Next two should become calculated global variables--time equivalents
-	const _LineDistanceInCarts = 25;	//Interline distance equivalent to one 25 pixel cart
-	const _LineDistanceInItems = 10;	//Interline distance equivalent to 10 items
-//
-//***Status Constants***
-	const _CheckingOut = 1;	//Status of shopper
-	const _Shopping = 2;
-	const _Searching = 3;
-	const _Angling = 4;
-	const _InLine = 5;
-	const _NearestLines = 1;
-	const _LineOfSight = 2;
-	const _AllLines = 3;
-	const _EndogSearch = 4;
-	const _CountCarts = 1;
-	const _CountItems = 2;
-
-    function Pt() {
-        this.ih = 0;
-        this.iv = 0;
-    }
-
-	function Shopper()
-	{
-		this.SLoc = new Pt();				//fields;  iv,ih
-		this.iSItems = 0;			//how many items in the cart?
-		this.iSStatus = 0;			//Out, Shopping, Searching, or in line
-		this.iSOldStatus = 0;
-		this.iSTargetLine = 0;		//What line is the shopper headed for?
-		this.bInformed = 0;		//Does shopper know checkout speeds?
-		this.iTickcountToLeave = 0;	//At what tickcount is he checked out?
-	}
-//
-	function Checkout()
-	{
-		this.iCv = 0;				//Top left corner of checkout
-		this.iCMaxItems = 0;			//Largest number of items permitted
-		this.iCSpeed = 0;			//Speed of checker
-		this.iCLineLgth = 0;			//How many shoppers in the line?
-		this.iColdLineEndh = 0;		//Temporary, for debugging
-		this.iCLineItemLgth = 0;		//How many items in the line?
-		this.iCTmpLineItemLgth = 0;
-		this.iCLineEndh = 0;			//h location of end of line
-	}
-//
-	function Well()
-	{
-		this.WLoc = new Pt();				//fields;  iv,ih
-		this.WMaxItems = 0;			//Largest # of items for shoppers from that well
-		this.iWStatus = 0;			//Is well active or not
-	}
-//
-	var shoppers;			//Maximum number of shoppers
-	var gCheckout;		//Maximum number of Checkouts
-	var gWell;				//Maximum  number of Wells
-//
-	var gNbrShoppers;			//current number of Shoppers
-	var gNbrCheckouts;			//current number of Checkouts
-	var gNbrWells;				//current number of Wells
-	var gNbrAisles;				//current number of Aisles
-	var gSCycle;				//Where in the search cycle you are
-//
-	var gSStrategy;				//Which search strategy?
-	var gSCtStrategy;			//What does the shopper count (carts or items)?
-	var lgInterval;			//How long since everyone moved?
-	var igMoving;			//True if everyone moving
-	var gWellsVisible;		//Are the wells visible?
-	var gCNewLimitFlag;		//Has the item limit just been changed?
-	var gWNewLimitFlag;		//Has the well limit just been changed?
-	var igCartSpeed;			//How fast they are moving
-	var gWellSpeed;				//Inverse of speed for generating carts
-	var gCkOutSpeed;			//Speed term common to all checkers
-	var gMinInterval;			//Minimum cycle time in ticks
-	var lgNewTime;				//Time when this mvmt cycle started
-	var igCheckouth;			//h coordinate of checkout top left corner
-	var gShopperHeight;			//Height of the shopper icon
-	var gShopperWidth;			//width of the shopper icon
-	var gWellHeight;			//Height of the well icon
-	var gWellWidth;				//width of the well icon 
-	var gGhostShopper;		//Used in sorting shoppers
-//
-//Text window stuff below
-	var gFixMenubar;			//if non-zero, then menubar
-	//  needs to be fixed
-	var gDirty;
-
-	gCheckout = new Array(_CheckoutMax + 1);
-	for (var i = 0; i <= _CheckoutMax; i++)
-		gCheckout[i] = new Checkout ();
-
-	gWell = new Array(_WellMax + 1);
-	for (var i = 0; i <= _WellMax; i++)
-		gWell[i] = new Well ();
-
-// draw the shapes for the Basic images
-	function drawShopper(x, y)
-	{
-		const width = 16, height = 14;
-		const handleLength = 12, handleWidth = 2, handleAngle = 2;
-		const cartFrontLength = 12;
-
-        ctx.save()
-		ctx.translate (x, y);
-
-        ctx.beginPath();
-		var yMargin = (height - handleLength) / 2;
-		ctx.moveTo (handleWidth, yMargin);
-		ctx.quadraticCurveTo (0, yMargin, 0, yMargin + handleAngle);
-		ctx.lineTo (0, height - yMargin - handleAngle);
-		ctx.quadraticCurveTo (0, height - yMargin, handleWidth, height - yMargin);
-        ctx.closePath();
-
-        ctx.beginPath();
-		var yFrontMargin = (height - cartFrontLength) / 2;
-		ctx.moveTo (handleWidth, 0);
-		ctx.lineTo (width, yFrontMargin);
-		ctx.lineTo (width, height - yFrontMargin);
-		ctx.lineTo (handleWidth, height);
-		ctx.closePath ();
-
-		ctx.translate (x, y);
-        ctx.strokeStyle = 'black';
-        ctx.stroke();
-		ctx.translate (-x, -y);
-		ctx.restore();
-	}
-
-	function drawCheckout(x, y)
-	{
-		const width = 50, height = 20;
-		x -= 15;				// HACK: overlap
-
-/*		BufferedImage texture = getDotsTexture ();
-		Rectangle2D anchor =
-			new Rectangle (0, 0, texture.getWidth (), texture.getHeight ());
-*/
-		ctx.save();
-		ctx.translate (x, y);
-		ctx.fillStyle = 'gray';
-		ctx.fillRect (0, 0, width, height);
-		ctx.strokeStyle = 'black';
-		ctx.strokeRect(0, 0, width, height);
-		ctx.fillRect(width - 10 - 4, 4, 10, height - 8);
-		ctx.translate (-x, -y);
-		ctx.restore();
-	}
-
-	function drawWell(x, y)
-	{
-		const width = 16, height = 14;
-
-		ctx.save();
-		ctx.translate (x, y);
-		ctx.fillStyle = 'black';
-		ctx.fillRect(0, 2, width, height - 4);
-		ctx.fillRect(3, 0, 8, height);
-		ctx.translate (-x, -y);
-		ctx.restore();
-	}
-
-// Supermarket.INCL
-
-//===============================================================================
-//                     Put your application's LOCAL FNs here
-//===============================================================================
 //***To Do List***
 //Search Strategies--nearest, line of sight, all, endogenous
 //Movable, creatable wells
@@ -235,119 +36,281 @@ const _srcXor = 2, _patXor = 10, _patCopy = 8, _centerJust = 2, _monaco = 4, _no
 //(Animate checkouts?)
 //Finish notes window, add other help windows
 //Timeout when menus, etc.
-//*****************
+
+var canvas = document.getElementById('mycanvas');
+var ctx = canvas.getContext('2d');
+
+const _ShopperMax = 50;
+const _WellMax = 20;
+const _CheckoutMax = 10;
+const _WellSpeedMax = 1000;
+const _WellSpeedMin = 100;
+const _CartSpeedMax = 4;
+const _CartSpeedMin = 1;
+const _CkOutSpeedMin = 0;
+const _CkOutSpeedMax = 3;
+const _SCycle = 2;	//inverse of fraction of shoppers that search each cycle                                          //
+
+const _Textdx = 5;	//xDisplacement in dItem relative to cart
+const _Textdy = 10;	//yDisplacement in dItem relative to cart
+const _TopCheckout = 10;
+const _CheckoutSeparation = 44;	//vertical distance between checkouts
+const _COffset = 31;	//v distance between checkout top and opening top
+
+//Next two should become calculated global variables--time equivalents
+const _LineDistanceInCarts = 25;	//Interline distance equivalent to one 25 pixel cart
+const _LineDistanceInItems = 10;	//Interline distance equivalent to 10 items
+
+//***Status Constants***
+const _CheckingOut = 1;	//Status of shopper
+const _Shopping = 2;
+const _Searching = 3;
+const _Angling = 4;
+const _InLine = 5;
+const _NearestLines = 1;
+const _LineOfSight = 2;
+const _AllLines = 3;
+const _EndogSearch = 4;
+const _CountCarts = 1;
+const _CountItems = 2;
+
+function Shopper()
+{
+	this.SLoc = new Vec();				//fields;  iv,ih
+	this.iSItems = 0;			//how many items in the cart?
+	this.iSStatus = 0;			//Out, Shopping, Searching, or in line
+	this.iSOldStatus = 0;
+	this.iSTargetLine = 0;		//What line is the shopper headed for?
+	this.bInformed = 0;		//Does shopper know checkout speeds?
+	this.iTickcountToLeave = 0;	//At what tickcount is he checked out?
+}
 //
-	function ShoppersSort()		//Shell sort modified from ZBasic 5 examples--decreasing
-	{
-    	shoppers.sort(function(A, B) { return B.SLoc.ih - A.SLoc.ih });
-	}
+function Checkout()
+{
+	this.iCv = 0;				//Top left corner of checkout
+	this.iCMaxItems = 0;			//Largest number of items permitted
+	this.iCSpeed = 0;			//Speed of checker
+	this.iCLineLgth = 0;			//How many shoppers in the line?
+	this.iColdLineEndh = 0;		//Temporary, for debugging
+	this.iCLineItemLgth = 0;		//How many items in the line?
+	this.iCTmpLineItemLgth = 0;
+	this.iCLineEndh = 0;			//h location of end of line
+}
 //
-	function NewShopper(iwell)
-	{
-		if (gWell[iwell].WMaxItems > 0) {
-			var x1 = gWell[iwell].WLoc.ih + gShopperWidth;
-			var y1 = gWell[iwell].WLoc.iv;
-			var shp = new Shopper();
-			shp.SLoc.ih = x1;
-			shp.SLoc.iv = y1;
-			shp.iSItems = RND (gWell[iwell].WMaxItems);
-			shp.iSStatus = _Searching;
-			shp.iSTargetLine = Math.floor(1 + (shp.SLoc.iv - _COffset) / _CheckoutSeparation);
-			// Check higher lines until one permits the cart
-			while(shp.iSItems > gCheckout[shp.iSTargetLine].iCMaxItems && shp.iSTargetLine <= gNbrCheckouts)
-				shp.iSTargetLine++;
-			// If no higher lines permit, check lower lines
-			while(shp.iSItems > gCheckout[shp.iSTargetLine].iCMaxItems && shp.iSTargetLine > 0)
-				shp.iSTargetLine--;
-			shp.bInformed = false;
-			shoppers.push(shp);
+function Well()
+{
+	this.WLoc = new Vec();				//fields;  iv,ih
+	this.WMaxItems = 0;			//Largest # of items for shoppers from that well
+	this.iWStatus = 0;			//Is well active or not
+}
+//
+var shoppers;			//Maximum number of shoppers
+var gCheckout;		//Maximum number of Checkouts
+var gWell;				//Maximum  number of Wells
+//
+var gNbrShoppers;			//current number of Shoppers
+var gNbrCheckouts;			//current number of Checkouts
+var gNbrWells;				//current number of Wells
+var gNbrAisles;				//current number of Aisles
+var gSCycle;				//Where in the search cycle you are
+//
+var gSStrategy;				//Which search strategy?
+var gSCtStrategy;			//What does the shopper count (carts or items)?
+var lgInterval;			//How long since everyone moved?
+var igMoving;			//True if everyone moving
+var gCNewLimitFlag;		//Has the item limit just been changed?
+var gWNewLimitFlag;		//Has the well limit just been changed?
+var igCartSpeed;			//How fast they are moving
+var gWellSpeed;				//Inverse of speed for generating carts
+var gCkOutSpeed;			//Speed term common to all checkers
+var gMinInterval;			//Minimum cycle time in ticks
+var lgNewTime;				//Time when this mvmt cycle started
+var igCheckouth;			//h coordinate of checkout top left corner
+var gShopperHeight;			//Height of the shopper icon
+var gShopperWidth;			//width of the shopper icon
+var gGhostShopper;		//Used in sorting shoppers
+//
+//Text window stuff below
+var gFixMenubar;			//if non-zero, then menubar
+//  needs to be fixed
+var gDirty;
+
+gCheckout = new Array(_CheckoutMax + 1);
+for (var i = 0; i <= _CheckoutMax; i++)
+	gCheckout[i] = new Checkout ();
+
+gWell = new Array(_WellMax + 1);
+for (var i = 0; i <= _WellMax; i++)
+	gWell[i] = new Well ();
+
+// draw the shapes for the Basic images
+function drawShopper(x, y)
+{
+	const width = 16, height = 14;
+	const handleLength = 12, handleWidth = 2, handleAngle = 2;
+	const cartFrontLength = 12;
+
+    ctx.save()
+	ctx.translate (x, y);
+
+    ctx.beginPath();
+	var yMargin = (height - handleLength) / 2;
+	ctx.moveTo (handleWidth, yMargin);
+	ctx.quadraticCurveTo (0, yMargin, 0, yMargin + handleAngle);
+	ctx.lineTo (0, height - yMargin - handleAngle);
+	ctx.quadraticCurveTo (0, height - yMargin, handleWidth, height - yMargin);
+    ctx.closePath();
+
+    ctx.beginPath();
+	var yFrontMargin = (height - cartFrontLength) / 2;
+	ctx.moveTo (handleWidth, 0);
+	ctx.lineTo (width, yFrontMargin);
+	ctx.lineTo (width, height - yFrontMargin);
+	ctx.lineTo (handleWidth, height);
+	ctx.closePath ();
+
+	ctx.translate (x, y);
+    ctx.strokeStyle = 'black';
+    ctx.stroke();
+	ctx.translate (-x, -y);
+	ctx.restore();
+}
+
+function drawCheckout(x, y)
+{
+	const width = 50, height = 20;
+	x -= 15;				// HACK: overlap
+
+/*		BufferedImage texture = getDotsTexture ();
+	Rectangle2D anchor =
+		new Rectangle (0, 0, texture.getWidth (), texture.getHeight ());
+*/
+	ctx.save();
+	ctx.translate (x, y);
+	ctx.fillStyle = 'gray';
+	ctx.fillRect (0, 0, width, height);
+	ctx.strokeStyle = 'black';
+	ctx.strokeRect(0, 0, width, height);
+	ctx.fillRect(width - 10 - 4, 4, 10, height - 8);
+	ctx.translate (-x, -y);
+	ctx.restore();
+}
+
+function drawWell(x, y)
+{
+	const width = 16, height = 14;
+
+	ctx.save();
+	ctx.translate (x, y);
+	ctx.fillStyle = 'black';
+	ctx.fillRect(0, 2, width, height - 4);
+	ctx.fillRect(3, 0, 8, height);
+	ctx.translate (-x, -y);
+	ctx.restore();
+}
+
+function NewShopper(iwell)
+{
+	if (gWell[iwell].WMaxItems > 0) {
+		var x1 = gWell[iwell].WLoc.x + gShopperWidth;
+		var y1 = gWell[iwell].WLoc.y;
+		var shp = new Shopper();
+		shp.SLoc.x = x1;
+		shp.SLoc.y = y1;
+		shp.iSItems = RND (gWell[iwell].WMaxItems);
+		shp.iSStatus = _Searching;
+		shp.iSTargetLine = Math.floor(1 + (shp.SLoc.y - _COffset) / _CheckoutSeparation);
+		// Check higher lines until one permits the cart
+		while(shp.iSItems > gCheckout[shp.iSTargetLine].iCMaxItems && shp.iSTargetLine <= gNbrCheckouts)
+			shp.iSTargetLine++;
+		// If no higher lines permit, check lower lines
+		while(shp.iSItems > gCheckout[shp.iSTargetLine].iCMaxItems && shp.iSTargetLine > 0)
+			shp.iSTargetLine--;
+		shp.bInformed = false;
+		shoppers.push(shp);
 console.log('new shoppers - ' + shoppers.length);
-		}
 	}
+}
 
-    function Rect() {
-        this.x1 = 0;
-        this.y1 = 0;
-        this.x2 = 0;
-        this.y2 = 0;
-    }
+function Rect() {
+    this.x1 = 0;
+    this.y1 = 0;
+    this.x2 = 0;
+    this.y2 = 0;
+}
 
-    function SETRECT(r, x1, y1, x2, y2) {
-        r.x1 = x1;
-        r.y1 = y1;
-        r.x2 = x2;
-        r.y2 = y2;
-    }
+function SETRECT(r, x1, y1, x2, y2) {
+    r.x1 = x1;
+    r.y1 = y1;
+    r.x2 = x2;
+    r.y2 = y2;
+}
 
-	function EDIT_FIELD (id, stmp, rect) {
-	    ctx.save();
-	    ctx.strokeStyle = 'black';
-	    ctx.strokeRect(rect.x1, rect.y1, rect.x2-rect.x1, rect.y2-rect.y1);
-	    ctx.fillStyle = 'black';
-	    ctx.fillText(stmp, rect.x1, rect.y1);
-	    ctx.restore();
+function EDIT_FIELD (id, stmp, rect) {
+    ctx.save();
+    ctx.strokeStyle = 'black';
+    ctx.strokeRect(rect.x1, rect.y1, rect.x2-rect.x1, rect.y2-rect.y1);
+    ctx.fillStyle = 'black';
+    ctx.fillText(stmp, rect.x1, rect.y1);
+    ctx.restore();
+}
+
+function Initialize()
+{
+	shoppers = [];
+
+	var rect = new Rect ();
+	gSStrategy = _NearestLines;
+	gSCtStrategy = _CountCarts;
+	gWellsVisible = true;
+	gCNewLimitFlag = false;
+	gWNewLimitFlag = false;
+	gNbrCheckouts = 6;
+	gNbrWells = 5;
+	gNbrAisles = 6;
+	igCheckouth = 400;
+	igCartSpeed = 1;
+	gWellSpeed = 200;
+	gCkOutSpeed = 2;
+	gMinInterval = 10;
+	gSCycle = 0;
+	var y = _TopCheckout;	//1
+	for (var Checkout = 1; Checkout <= gNbrCheckouts; Checkout++) {
+		gCheckout[Checkout].iCv = y;	//define checkout locations
+		y = y + _CheckoutSeparation;
+		gCheckout[Checkout].iCMaxItems = 100;
+		gCheckout[Checkout].iCLineLgth = 0;	//Line starts with no carts
+		gCheckout[Checkout].iCLineItemLgth = 0;	//Line starts with no items
+		gCheckout[Checkout].iCLineEndh = igCheckouth;	//Line starts with zero length
 	}
-
-	function Initialize()
-	{
-		shoppers = [];
-
-		var rect = new Rect ();
-		gSStrategy = _NearestLines;
-		gSCtStrategy = _CountCarts;
-		gWellsVisible = true;
-		gCNewLimitFlag = false;
-		gWNewLimitFlag = false;
-		gNbrCheckouts = 6;
-		gNbrWells = 5;
-		gNbrAisles = 6;
-		igCheckouth = 400;
-		igCartSpeed = 1;
-		gWellSpeed = 200;
-		gCkOutSpeed = 2;
-		gMinInterval = 10;
-		gSCycle = 0;
-		var y = _TopCheckout;	//1
-		for (var Checkout = 1; Checkout <= gNbrCheckouts; Checkout++) {
-			gCheckout[Checkout].iCv = y;	//define checkout locations
-			y = y + _CheckoutSeparation;
-			gCheckout[Checkout].iCMaxItems = 100;
-			gCheckout[Checkout].iCLineLgth = 0;	//Line starts with no carts
-			gCheckout[Checkout].iCLineItemLgth = 0;	//Line starts with no items
-			gCheckout[Checkout].iCLineEndh = igCheckouth;	//Line starts with zero length
-		}
-		gCheckout[6].iCMaxItems = 20;
-		for (var Checkout = 1; Checkout <= gNbrCheckouts; Checkout++) {
-			SETRECT (rect, igCheckouth + 50, gCheckout[Checkout].iCv + 1, igCheckouth + 90, gCheckout[Checkout].iCv + 29);	// set initial rectangle
-			var stmp = "Items";
-			SETRECT (rect, igCheckouth + 52, gCheckout[Checkout].iCv + 15, igCheckouth + 88, gCheckout[Checkout].iCv + 27);	// set initial rectangle
-			if (gCheckout[Checkout].iCMaxItems < 100) {
-				var Length = '' + gCheckout[Checkout].iCMaxItems;	// Getting rid of that @%#$ leading blank
-				stmp =
-					'' + gCheckout[Checkout].iCMaxItems;
-			} else {
-				stmp = "";
-			}
-//    TEXT
-			SETRECT (rect, igCheckouth + 48, gCheckout[Checkout].iCv + 3, igCheckouth + 86, gCheckout[Checkout].iCv + 14);	//set initial rectangle
-			EDIT_FIELD (Checkout, stmp, rect);
-		}
-//  EDIT FIELD #0
-		//
+	gCheckout[6].iCMaxItems = 20;
+	for (var Checkout = 1; Checkout <= gNbrCheckouts; Checkout++) {
+		SETRECT (rect, igCheckouth + 50, gCheckout[Checkout].iCv + 1, igCheckouth + 90, gCheckout[Checkout].iCv + 29);	// set initial rectangle
+		var stmp = "Items";
+		SETRECT (rect, igCheckouth + 52, gCheckout[Checkout].iCv + 15, igCheckouth + 88, gCheckout[Checkout].iCv + 27);	// set initial rectangle
+		if (gCheckout[Checkout].iCMaxItems < 100) {
+			var Length = '' + gCheckout[Checkout].iCMaxItems;	// Getting rid of that @%#$ leading blank
+			stmp = '' + gCheckout[Checkout].iCMaxItems;
+		} else
+			stmp = '';
+		SETRECT (rect, igCheckouth + 48, gCheckout[Checkout].iCv + 3, igCheckouth + 86, gCheckout[Checkout].iCv + 14);	//set initial rectangle
+		EDIT_FIELD (Checkout, stmp, rect);
+	}
+	//
 //  lpict=FN GETRESOURCE(_"PICT",_WPICTid)          //get pict handle to Well
 //  if (lpict != 0) {                              //valid handle?
 //    BLOCKMOVE [lpict]+2,@rect,8                   //Find pict dimensions
 //    PICTURE (1,1), lpict
 //    CALL RELEASERESOURCE(lpict)                   //remove rsrc PICTs this way ONLY
 //  }
-		y = _CheckoutSeparation + _TopCheckout - 4;
-		for (var Well = 1; Well <= gNbrWells; Well++) {
-			gWell[Well].WLoc.ih = 5;	//define well horizontal
-			gWell[Well].WLoc.iv = y;	//define well height
-			y = y + _CheckoutSeparation;
-			gWell[Well].WMaxItems = RND (99);
-		}
-		//
+	y = _CheckoutSeparation + _TopCheckout - 4;
+	for (var Well = 1; Well <= gNbrWells; Well++) {
+		gWell[Well].WLoc.x = 5;	//define well horizontal
+		gWell[Well].WLoc.y = y;	//define well height
+		y = y + _CheckoutSeparation;
+		gWell[Well].WMaxItems = RND (99);
+	}
+	//
 //  lpict=FN GETRESOURCE(_"PICT",_SPICTid)          //get pict handle to shopper
 //  if (lpict != 0                              //valid handle?) {
 //    BLOCKMOVE [lpict]+2,@rect,8                   //Find pict dimensions
@@ -356,462 +319,464 @@ console.log('new shoppers - ' + shoppers.length);
 //  }
 //  GET (1,1)-(1+rect.right-rect.left,1+rect.bottom-rect[0].top), igSImage
 //  PUT (1,1), igSImage(0),XOR
-		gShopperHeight = rect.y2 - rect.y1;
-		gShopperWidth = 1 + rect.x2 - rect.x1;	//Horizontal dimension of shopper icon
-		lgNewTime = TICKCOUNT ();
-		igMoving = true;
-	}
+	gShopperHeight = rect.y2 - rect.y1;
+	gShopperWidth = 1 + rect.x2 - rect.x1;	//Horizontal dimension of shopper icon
+	lgNewTime = TICKCOUNT ();
+	igMoving = true;
+}
 
-    function CLS() {
-        ctx.save();
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.restore();
-    }
+function CLS() {
+    ctx.save();
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+}
 
-    function SHADOWBOX(rect) {
-        ctx.save();
-        ctx.strokeStyle = 'black';
-        ctx.strokeRect(rect.x1, rect.y1, rect.x2-rect.x1, rect.y2-rect.y1);
-        ctx.restore();
-    }
+function SHADOWBOX(rect) {
+    PLOT(rect.x1, rect.y1, rect.x2, rect.y2);
+}
 
-    function CBOX(rect, stmp) {
-    	EDIT_FIELD (0, stmp, rect);
-    }
+function PLOT(x1, y1, x2, y2) {
+    ctx.save();
+    ctx.strokeStyle = 'black';
+    ctx.strokeRect(x1, y1, x2-x1, y2-y1);
+    ctx.restore();
+}
 
-    function iPRINT(x, y, str) {
-	    ctx.save();
-	    ctx.fillStyle = 'black';
-	    ctx.fillText(str, x, y);
-	    ctx.restore();
-    }
+function CBOX(rect, stmp) {
+	EDIT_FIELD (0, stmp, rect);
+}
 
-    function BOX_FILL(x1, y1, x2, y2) {
-	    ctx.save();
-	    ctx.fillStyle = 'black';
-	    ctx.fillRect(x1, y1, x2-x1, y2-y1);
-	    ctx.restore();
-    }
+function iPRINT(x, y, str) {
+    ctx.save();
+    ctx.fillStyle = 'black';
+    ctx.fillText(str, x, y);
+    ctx.restore();
+}
 
-	function RefreshMain()
-	{
-		var rect = new Rect ();
-		CLS();
+function BOX_FILL(x1, y1, x2, y2) {
+    ctx.save();
+    ctx.fillStyle = 'black';
+    ctx.fillRect(x1, y1, x2-x1, y2-y1);
+    ctx.restore();
+}
+
+function RefreshMain()
+{
+	var rect = new Rect ();
+	CLS();
 //  lpict=FN GETRESOURCE(_"PICT",_CPICTid)          //get pict handle to Checkout
 //  if (lpict != 0                              //valid handle?) {
-		for (var Checkout = 1; Checkout <= gNbrCheckouts; Checkout++) {
-			drawCheckout (igCheckouth, gCheckout[Checkout].iCv);	// put pict to window
-			SETRECT (rect, igCheckouth + 46, gCheckout[Checkout].iCv + 1, igCheckouth + 90, gCheckout[Checkout].iCv + 29);	//set initial rectangle
-			SHADOWBOX (rect);	//draw shadowbox first
-			if (gCheckout[Checkout].iCMaxItems < 100) {
-				SETRECT (rect, igCheckouth + 52, gCheckout[Checkout].iCv + 15, igCheckouth + 86, gCheckout[Checkout].iCv + 27);	//set initial rectangle
-				var stmp = "Items";	//sSTR(gCheckout[Checkout)].iCMaxItems+" Items"
-				CBOX (rect, stmp);	//center justify
-			}
-			if (gCheckout[Checkout].iCMaxItems == 0) {	//Lane is shut
-				PLOT (igCheckouth + gShopperWidth + 1,
-					  gCheckout[Checkout].iCv + _COffset,
-					  igCheckouth + gShopperWidth + 1,
-					  gCheckout[Checkout].iCv + _COffset + gShopperHeight);
-			}
+	for (var Checkout = 1; Checkout <= gNbrCheckouts; Checkout++) {
+		drawCheckout (igCheckouth, gCheckout[Checkout].iCv);	// put pict to window
+		SETRECT (rect, igCheckouth + 46, gCheckout[Checkout].iCv + 1, igCheckouth + 90, gCheckout[Checkout].iCv + 29);	//set initial rectangle
+		SHADOWBOX (rect);	//draw shadowbox first
+		if (gCheckout[Checkout].iCMaxItems < 100) {
+			SETRECT (rect, igCheckouth + 52, gCheckout[Checkout].iCv + 15, igCheckouth + 86, gCheckout[Checkout].iCv + 27);	//set initial rectangle
+			var stmp = "Items";	//sSTR(gCheckout[Checkout)].iCMaxItems+" Items"
+			CBOX (rect, stmp);	//center justify
 		}
+		if (gCheckout[Checkout].iCMaxItems == 0) {	//Lane is shut
+			PLOT (igCheckouth + gShopperWidth + 1,
+				  gCheckout[Checkout].iCv + _COffset,
+				  igCheckouth + gShopperWidth + 1,
+				  gCheckout[Checkout].iCv + _COffset + gShopperHeight);
+		}
+	}
 //    CALL RELEASERESOURCE(lpict)
-		//
-		for(var i = 0; i < shoppers.length; i++) {
-		    var shp = shoppers[i];
-			drawShopper(shp.SLoc.ih, shp.SLoc.iv);
-			iPRINT (shp.SLoc.ih + _Textdx, shp.SLoc.iv + _Textdy, shp.iSItems);
-		}
-		//
+	//
+	for(var i = 0; i < shoppers.length; i++) {
+	    var shp = shoppers[i];
+		drawShopper(shp.SLoc.x, shp.SLoc.y);
+		iPRINT (shp.SLoc.x + _Textdx, shp.SLoc.y + _Textdy, shp.iSItems);
+	}
+	//
 //  lpict=FN GETRESOURCE(_"PICT",_WPICTid)          //get pict handle to Well
 //  if (lpict != 0                              //valid handle?) {
-		if (gNbrWells >= 1 && gWellsVisible) {
-			for (var well = 1; well <= gNbrWells; well++) {
-				drawWell (gWell[well].WLoc.ih, gWell[well].WLoc.iv);	//put pict to window
-				//Remove next line if we use edit fields instead
-				iPRINT (gWell[well].WLoc.ih + _Textdx - 4,
-						gWell[well].WLoc.iv + _Textdy + 1,
-						gWell[well].WMaxItems);
-			}
+	if (gNbrWells >= 1 && gWellsVisible) {
+		for (var well = 1; well <= gNbrWells; well++) {
+			drawWell (gWell[well].WLoc.x, gWell[well].WLoc.y);	//put pict to window
+			//Remove next line if we use edit fields instead
+			iPRINT (gWell[well].WLoc.x + _Textdx - 4,
+					gWell[well].WLoc.y + _Textdy + 1,
+					gWell[well].WMaxItems);
 		}
-//    CALL RELEASERESOURCE(lpict)
-		//
-		var y = 20 + _TopCheckout;
-		for (var Aisle = 1; Aisle <= gNbrAisles; Aisle++) {
-			BOX_FILL (0, y, 30, y + 8);	//draw aisles
-			y = y + _CheckoutSeparation;
-		}
-  BOX_FILL (0,y-14 , 500, y-8);                     //draw bottom wall
-  BOX_FILL (0,1 , 500, 7);                          //draw top wall
 	}
+//    CALL RELEASERESOURCE(lpict)
+	//
+	var y = 20 + _TopCheckout;
+	for (var Aisle = 1; Aisle <= gNbrAisles; Aisle++) {
+		BOX_FILL (0, y, 30, y + 8);	//draw aisles
+		y = y + _CheckoutSeparation;
+	}
+BOX_FILL (0,y-14 , 500, y-8);                     //draw bottom wall
+BOX_FILL (0,1 , 500, 7);                          //draw top wall
+}
 //
 
-    function TICKCOUNT() {
-        return new Date().getTime();
-    }
+function TICKCOUNT() {
+    return new Date().getTime();
+}
 
-	function ShoppersSearch()
-	{
-		if (shoppers.length > 0) {	//Are there any shoppers to move?
-			//Decide which line the shopper is going to
-			//for (var Shp = 0; Shp <= gNbrShoppers-1; Shp++)
-			var iTargetLine;
-			for (var i = gSCycle; i < shoppers.length; i += _SCycle) {
-			    var shp = shoppers[i];
-				if (shp.iSStatus == _Searching) {
-					var TargetMiss = (shp.SLoc.iv - _COffset) % _CheckoutSeparation;
-					var iShopperLine = Math.floor(1 + (shp.SLoc.iv - _COffset) / _CheckoutSeparation);	//first line to shopper's left
-					if (TargetMiss == 0)
-						iTargetLine = iShopperLine - 1;
-					else
-						iTargetLine = iShopperLine;	//If cart is in line with checkout;
-					if (iTargetLine < 1)
-						iTargetLine = 1;
+function ShoppersSearch()
+{
+	if (shoppers.length > 0) {	//Are there any shoppers to move?
+		//Decide which line the shopper is going to
+		//for (var Shp = 0; Shp <= gNbrShoppers-1; Shp++)
+		var iTargetLine;
+		for (var i = gSCycle; i < shoppers.length; i += _SCycle) {
+		    var shp = shoppers[i];
+			if (shp.iSStatus == _Searching) {
+				var TargetMiss = (shp.SLoc.y - _COffset) % _CheckoutSeparation;
+				var iShopperLine = Math.floor(1 + (shp.SLoc.y - _COffset) / _CheckoutSeparation);	//first line to shopper's left
+				if (TargetMiss == 0)
+					iTargetLine = iShopperLine - 1;
+				else
+					iTargetLine = iShopperLine;	//If cart is in line with checkout;
+				if (iTargetLine < 1)
+					iTargetLine = 1;
 
-					var iBestLgth = 5000;
-					var MaxLine = 0, TLine2 = 0;
-					switch(gSStrategy) {
-					    case _NearestLines:
-						    TLine2 = iTargetLine;
-						    MaxLine = iShopperLine + 1;
-						    if (MaxLine > gNbrCheckouts) {
-							    MaxLine = gNbrCheckouts;
-						    }
-						    break;
-					    case _LineOfSight:
-					    case _AllLines:
-						    TLine2 = 1;
+				var iBestLgth = 5000;
+				var MaxLine = 0, TLine2 = 0;
+				switch(gSStrategy) {
+				    case _NearestLines:
+					    TLine2 = iTargetLine;
+					    MaxLine = iShopperLine + 1;
+					    if (MaxLine > gNbrCheckouts) {
 						    MaxLine = gNbrCheckouts;
-						    break;
-					    case _EndogSearch:
-						    break;
-					}
-					while(TLine2 <= MaxLine && TLine2 <= gNbrCheckouts) {
-						if(shp.iSItems <= gCheckout[TLine2].iCMaxItems) {
-							if (gSStrategy == _LineOfSight)
-								;  // calculate if end of line is in sight
-							var CrtLgth;
-							if (gSCtStrategy == _CountCarts)
-								CrtLgth = gCheckout[TLine2].iCLineLgth;
-							else
-								CrtLgth = gCheckout[TLine2].iCLineItemLgth;
+					    }
+					    break;
+				    case _LineOfSight:
+				    case _AllLines:
+					    TLine2 = 1;
+					    MaxLine = gNbrCheckouts;
+					    break;
+				    case _EndogSearch:
+					    break;
+				}
+				while(TLine2 <= MaxLine && TLine2 <= gNbrCheckouts) {
+					if(shp.iSItems <= gCheckout[TLine2].iCMaxItems) {
+						if (gSStrategy == _LineOfSight)
+							;  // calculate if end of line is in sight
+						var CrtLgth;
+						if (gSCtStrategy == _CountCarts)
+							CrtLgth = gCheckout[TLine2].iCLineLgth;
+						else
+							CrtLgth = gCheckout[TLine2].iCLineItemLgth;
 
-							var HDistance = 0;
-							if (CrtLgth < iBestLgth) {
-								iBestLgth = CrtLgth;
-								iTargetLine = TLine2;	//Make the shorter line the target
-								HDistance =
-									Math.abs((shp.SLoc.iv - _COffset) -
-										 gCheckout[TLine2].iCv);
-							} else {
-								if (CrtLgth == iBestLgth) {
-									// ricardo: I initalized HDistance as 0, otherwise this would
-									// read from an unitialized variable !!
-									if (Math.abs(shp.SLoc.iv - _COffset - gCheckout[TLine2].iCv) < HDistance) {
-										iTargetLine = TLine2;
-										HDistance = Math.abs(shp.SLoc.iv - _COffset - gCheckout[TLine2].iCv);
-									}
+						var HDistance = 0;
+						if (CrtLgth < iBestLgth) {
+							iBestLgth = CrtLgth;
+							iTargetLine = TLine2;	//Make the shorter line the target
+							HDistance =
+								Math.abs((shp.SLoc.y - _COffset) -
+									 gCheckout[TLine2].iCv);
+						} else {
+							if (CrtLgth == iBestLgth) {
+								// ricardo: I initalized HDistance as 0, otherwise this would
+								// read from an unitialized variable !!
+								if (Math.abs(shp.SLoc.y - _COffset - gCheckout[TLine2].iCv) < HDistance) {
+									iTargetLine = TLine2;
+									HDistance = Math.abs(shp.SLoc.y - _COffset - gCheckout[TLine2].iCv);
 								}
 							}
 						}
-						TLine2++;
 					}
-					if (iBestLgth < gCheckout[shp.iSTargetLine].iCLineLgth)
-						shp.iSTargetLine = iTargetLine;
-					else if (shp.iSItems > gCheckout[shp.iSTargetLine].iCMaxItems)
-    					shp.iSTargetLine = (shoppers[Shp].iSTargetLine + 1) % gNbrCheckouts;
+					TLine2++;
 				}
+				if (iBestLgth < gCheckout[shp.iSTargetLine].iCLineLgth)
+					shp.iSTargetLine = iTargetLine;
+				else if (shp.iSItems > gCheckout[shp.iSTargetLine].iCMaxItems)
+					shp.iSTargetLine = (shoppers[Shp].iSTargetLine + 1) % gNbrCheckouts;
 			}
-			for (var Checkout = 1; Checkout <= gNbrCheckouts; Checkout++) {
-				gCheckout[Checkout].iCTmpLineItemLgth = gCheckout[Checkout].iCLineItemLgth;	//restore lengths
-			}
-			for(var i = shoppers.length - 1; i >= 0; i--) {
-			    var shp = shoppers[i];
-				if(shp.iSStatus == _InLine) {	//Checks the adjacent lines to see if worth shifting
-					iTargetLine = shp.iSTargetLine;
-					var Length, icrtLength;
-					if (gSCtStrategy == _CountCarts)
-						Length = -shp.SLoc.ih;	//length in pixels
-					else {
-						gCheckout[iTargetLine].iCTmpLineItemLgth = gCheckout[iTargetLine].iCTmpLineItemLgth - shp.iSItems;
-						Length = gCheckout[iTargetLine].iCTmpLineItemLgth;	//Length in Items
-					}
-					if(iTargetLine > 1) {
-						if(gSCtStrategy == _CountCarts)
-							icrtLength = _LineDistanceInCarts - gCheckout[iTargetLine-1].iCLineEndh;
-						else
-							icrtLength = gCheckout[iTargetLine - 1].iCLineItemLgth + _LineDistanceInItems;	//Oops--sign fflip!!
-						if (Length > icrtLength && shp.iSItems <= gCheckout[iTargetLine - 1].iCMaxItems) {
-							shp.iSTargetLine = iTargetLine - 1;
-							Length = icrtLength;
-						}
-					}
-					if(iTargetLine < gNbrCheckouts) {
-						if(gSCtStrategy == _CountCarts)
-							icrtLength = _LineDistanceInCarts - gCheckout[iTargetLine+1].iCLineEndh;
-						else
-							icrtLength = gCheckout[iTargetLine + 1].iCLineItemLgth + _LineDistanceInItems;
-						if (Length > icrtLength && shp.iSItems <= gCheckout[iTargetLine + 1].iCMaxItems) {
-							shp.iSTargetLine = iTargetLine + 1;
-							Length = icrtLength;
-						}
-					}
-					if (iTargetLine != shp.iSTargetLine) {	//If cart has switched targets
-						shp.iSStatus = _Searching;	//Change status back to searching
-						gCheckout[iTargetLine].iCLineLgth--;	//old Line is shorter by 1
-						gCheckout[iTargetLine].iCLineEndh = gCheckout[iTargetLine].iCLineEndh + gShopperWidth;
-						gCheckout[iTargetLine].iCLineItemLgth = gCheckout[iTargetLine].iCLineItemLgth - shp.iSItems;
-					}
-				}
-			}
-			gSCycle++;
-			if (gSCycle >= _SCycle)
-				gSCycle = 0;
 		}
-		lgNewTime = TICKCOUNT ();
-	}
-
-	function CheckInterval()
-	{
-		while (TICKCOUNT() < (lgNewTime + gMinInterval)) {
-		}
-		lgInterval = TICKCOUNT() - lgNewTime;
-		lgNewTime = TICKCOUNT();
-	}
-
-	function ShowLinelength()
-	{
 		for (var Checkout = 1; Checkout <= gNbrCheckouts; Checkout++) {
-			PLOT (gCheckout[Checkout].iColdLineEndh,
-				  gCheckout[Checkout].iCv + 20,
-				  gCheckout[Checkout].iColdLineEndh,
-				  gCheckout[Checkout].iCv + 40);
-			PLOT (gCheckout[Checkout].iCLineEndh,
-				  gCheckout[Checkout].iCv + 20,
-				  gCheckout[Checkout].iCLineEndh,
-				  gCheckout[Checkout].iCv + 40);
-			gCheckout[Checkout].iColdLineEndh =
-				gCheckout[Checkout].iCLineEndh;
+			gCheckout[Checkout].iCTmpLineItemLgth = gCheckout[Checkout].iCLineItemLgth;	//restore lengths
 		}
-	}
-
-	function ShowLineItemlength()
-	{
-		for (var Checkout = 1; Checkout <= gNbrCheckouts; Checkout++) {
-			TEXT (-1,-1,-1,_patCopy);
-			iPRINT (igCheckouth + 30, gCheckout[Checkout].iCv + 20,
-					gCheckout[Checkout].iCLineItemLgth);
-			TEXT (-1,-1,-1,_patXor);
-		}
-	}
-//
-	function ShoppersCheckOut()
-	{
-		for (var i = shoppers.length-1; i >= 0; i--) {	//Who is checking out?
+		for(var i = shoppers.length - 1; i >= 0; i--) {
 		    var shp = shoppers[i];
-			if(shp.iSStatus == _CheckingOut) {
-				var oldItems = shp.iSItems;
-				var ItemsCkdOut = Math.floor(lgInterval >> gCkOutSpeed);
-				shp.iSItems -= ItemsCkdOut;
-				if(shp.iSItems <= 0) {	//Shopper is finished, exits
-					gCheckout[shp.iSTargetLine].iCLineLgth--;	//Line is shorter by 1
-					gCheckout[shp.iSTargetLine].iCLineEndh = gCheckout[shp.iSTargetLine].iCLineEndh + gShopperWidth;
-					gCheckout[shp.iSTargetLine].iCLineItemLgth -= oldItems;
-					shoppers.splice(i, 1);
+			if(shp.iSStatus == _InLine) {	//Checks the adjacent lines to see if worth shifting
+				iTargetLine = shp.iSTargetLine;
+				var Length, icrtLength;
+				if (gSCtStrategy == _CountCarts)
+					Length = -shp.SLoc.x;	//length in pixels
+				else {
+					gCheckout[iTargetLine].iCTmpLineItemLgth = gCheckout[iTargetLine].iCTmpLineItemLgth - shp.iSItems;
+					Length = gCheckout[iTargetLine].iCTmpLineItemLgth;	//Length in Items
 				}
-				else
-					gCheckout[shp.iSTargetLine].iCLineItemLgth -= ItemsCkdOut;
+				if(iTargetLine > 1) {
+					if(gSCtStrategy == _CountCarts)
+						icrtLength = _LineDistanceInCarts - gCheckout[iTargetLine-1].iCLineEndh;
+					else
+						icrtLength = gCheckout[iTargetLine - 1].iCLineItemLgth + _LineDistanceInItems;	//Oops--sign fflip!!
+					if (Length > icrtLength && shp.iSItems <= gCheckout[iTargetLine - 1].iCMaxItems) {
+						shp.iSTargetLine = iTargetLine - 1;
+						Length = icrtLength;
+					}
+				}
+				if(iTargetLine < gNbrCheckouts) {
+					if(gSCtStrategy == _CountCarts)
+						icrtLength = _LineDistanceInCarts - gCheckout[iTargetLine+1].iCLineEndh;
+					else
+						icrtLength = gCheckout[iTargetLine + 1].iCLineItemLgth + _LineDistanceInItems;
+					if (Length > icrtLength && shp.iSItems <= gCheckout[iTargetLine + 1].iCMaxItems) {
+						shp.iSTargetLine = iTargetLine + 1;
+						Length = icrtLength;
+					}
+				}
+				if (iTargetLine != shp.iSTargetLine) {	//If cart has switched targets
+					shp.iSStatus = _Searching;	//Change status back to searching
+					gCheckout[iTargetLine].iCLineLgth--;	//old Line is shorter by 1
+					gCheckout[iTargetLine].iCLineEndh = gCheckout[iTargetLine].iCLineEndh + gShopperWidth;
+					gCheckout[iTargetLine].iCLineItemLgth = gCheckout[iTargetLine].iCLineItemLgth - shp.iSItems;
+				}
 			}
 		}
+		gSCycle++;
+		if (gSCycle >= _SCycle)
+			gSCycle = 0;
 	}
+	lgNewTime = TICKCOUNT ();
+}
+
+function CheckInterval()
+{
+	while (TICKCOUNT() < (lgNewTime + gMinInterval)) {
+	}
+	lgInterval = TICKCOUNT() - lgNewTime;
+	lgNewTime = TICKCOUNT();
+}
+
+function ShowLinelength()
+{
+	for (var Checkout = 1; Checkout <= gNbrCheckouts; Checkout++) {
+		PLOT (gCheckout[Checkout].iColdLineEndh,
+			  gCheckout[Checkout].iCv + 20,
+			  gCheckout[Checkout].iColdLineEndh,
+			  gCheckout[Checkout].iCv + 40);
+		PLOT (gCheckout[Checkout].iCLineEndh,
+			  gCheckout[Checkout].iCv + 20,
+			  gCheckout[Checkout].iCLineEndh,
+			  gCheckout[Checkout].iCv + 40);
+		gCheckout[Checkout].iColdLineEndh =
+			gCheckout[Checkout].iCLineEndh;
+	}
+}
+
+function ShowLineItemlength()
+{
+	for (var Checkout = 1; Checkout <= gNbrCheckouts; Checkout++)
+		iPRINT (igCheckouth + 30, gCheckout[Checkout].iCv + 20,
+				gCheckout[Checkout].iCLineItemLgth);
+}
+
+function ShoppersCheckOut()
+{
+	for (var i = shoppers.length-1; i >= 0; i--) {	//Who is checking out?
+	    var shp = shoppers[i];
+		if(shp.iSStatus == _CheckingOut) {
+			var oldItems = shp.iSItems;
+			var ItemsCkdOut = Math.floor(lgInterval >> gCkOutSpeed);
+			shp.iSItems -= ItemsCkdOut;
+			if(shp.iSItems <= 0) {	//Shopper is finished, exits
+				gCheckout[shp.iSTargetLine].iCLineLgth--;	//Line is shorter by 1
+				gCheckout[shp.iSTargetLine].iCLineEndh = gCheckout[shp.iSTargetLine].iCLineEndh + gShopperWidth;
+				gCheckout[shp.iSTargetLine].iCLineItemLgth -= oldItems;
+				shoppers.splice(i, 1);
+			}
+			else
+				gCheckout[shp.iSTargetLine].iCLineItemLgth -= ItemsCkdOut;
+		}
+	}
+}
 //
-	function ShoppersMove()
-	{
-		var ideltas = Math.floor(lgInterval >> igCartSpeed);
-		var ideltav = 0;
-		for(var i = 0; i < shoppers.length; i++) {
-		    var shp = shoppers[i];
-			var VDeviation = gCheckout[shp.iSTargetLine].iCv - shp.SLoc.iv + _COffset;
-			var HDeviation;
-			if(gCheckout[shp.iSTargetLine].iCLineLgth == 0)	//Aim at checkout entrance
-				HDeviation = gCheckout[shp.iSTargetLine].iCLineEndh - (shp.SLoc.ih + gShopperWidth);
-			else		//Aim at back of last cart in line
-				HDeviation = gCheckout[shp.iSTargetLine].iCLineEndh - shp.SLoc.ih;
-			var SDeviation = Math.sqrt((VDeviation*VDeviation) + (HDeviation*HDeviation));
-			var ideltah = 0;
-			switch(shp.iSStatus) {
-			    case _Shopping: break;	//Not yet implemented
-			    case _Searching:
-			    case _InLine:
-				    if (Math.abs(VDeviation) < 3) {
-					    ideltah = ideltas;
-					    ideltav = VDeviation + 2 - RND (3);
-				    } else {
-					    ideltah = Math.floor((ideltas * HDeviation) / SDeviation);
-					    ideltav = Math.floor((ideltas * VDeviation) / SDeviation);
-				    }
-				    break;
-			    case _CheckingOut:	//The shopper is standing at the checkout
-				    ideltah = 0;
-				    ideltav = 0;
-				    break;
-			}
-			shp.SLoc.ih = shp.SLoc.ih + ideltah;
-			shp.SLoc.iv = shp.SLoc.iv + ideltav;
+function ShoppersMove()
+{
+	var ideltas = Math.floor(lgInterval >> igCartSpeed);
+	var ideltav = 0;
+	for(var i = 0; i < shoppers.length; i++) {
+	    var shp = shoppers[i];
+		var VDeviation = gCheckout[shp.iSTargetLine].iCv - shp.SLoc.y + _COffset;
+		var HDeviation;
+		if(gCheckout[shp.iSTargetLine].iCLineLgth == 0)	//Aim at checkout entrance
+			HDeviation = gCheckout[shp.iSTargetLine].iCLineEndh - (shp.SLoc.x + gShopperWidth);
+		else		//Aim at back of last cart in line
+			HDeviation = gCheckout[shp.iSTargetLine].iCLineEndh - shp.SLoc.x;
+		var SDeviation = Math.sqrt((VDeviation*VDeviation) + (HDeviation*HDeviation));
+		var ideltah = 0;
+		switch(shp.iSStatus) {
+		    case _Shopping: break;	//Not yet implemented
+		    case _Searching:
+		    case _InLine:
+			    if (Math.abs(VDeviation) < 3) {
+				    ideltah = ideltas;
+				    ideltav = VDeviation + 2 - RND (3);
+			    } else {
+				    ideltah = Math.floor((ideltas * HDeviation) / SDeviation);
+				    ideltav = Math.floor((ideltas * VDeviation) / SDeviation);
+			    }
+			    break;
+		    case _CheckingOut:	//The shopper is standing at the checkout
+			    ideltah = 0;
+			    ideltav = 0;
+			    break;
+		}
+		shp.SLoc.x = shp.SLoc.x + ideltah;
+		shp.SLoc.y = shp.SLoc.y + ideltav;
 
-			//check for collision with shoppers ahead
-			var j;
-			for(j = 0; j < shoppers.length; j++)
-			    if(i != j)
-					if(shoppers[i].SLoc.ih + gShopperWidth >= shoppers[j].SLoc.ih && shoppers[i].SLoc.ih <= shoppers[j].SLoc.ih)
-					    if(Math.abs(shoppers[j].SLoc.iv - shoppers[i].SLoc.iv) <= gShopperHeight)
-					        break;
-			if(j < shoppers.length) {
-				shoppers[i].SLoc.ih = shoppers[j].SLoc.ih - gShopperWidth;
-				if (shoppers[j].iSStatus == _CheckingOut || shoppers[j].iSStatus == _InLine)
-					if(shp.iSStatus != _InLine) {
-						shp.iSStatus = _InLine;
-						gCheckout[shp.iSTargetLine].iCLineLgth++;	//Line is longer by 1
-						gCheckout[shp.iSTargetLine].iCLineItemLgth += shp.iSItems;
-						gCheckout[shp.iSTargetLine].iCLineEndh -= gShopperWidth;
-					}
-			}
-
-			//next check  for collision with checkout counter
-			if (shp.SLoc.ih > igCheckouth - gShopperWidth) {
-				var AisleMiss = gCheckout[shp.iSTargetLine].iCv - shp.SLoc.iv + _COffset;
-				if(Math.abs(AisleMiss) > 1)
-					shp.SLoc.ih = igCheckouth - gShopperWidth;
-			}
-
-			//next check  for collision with store walls
-			if(shp.SLoc.iv < 2) {
-				shp.SLoc.iv = 2;
-				shp.iSTargetLine = 1;
-			}
-			if(shp.SLoc.iv > 320)
-				shp.SLoc.iv = 320;
-
-			//Has it reached the checkout?
-			if(shp.SLoc.ih > igCheckouth) {	//Has it reached the checkout?
-				if(shp.iSStatus != _InLine && shp.iSStatus != _CheckingOut) {
+		//check for collision with shoppers ahead
+		var j;
+		for(j = 0; j < shoppers.length; j++)
+		    if(i != j)
+				if(shoppers[i].SLoc.x + gShopperWidth >= shoppers[j].SLoc.x && shoppers[i].SLoc.x <= shoppers[j].SLoc.x)
+				    if(Math.abs(shoppers[j].SLoc.y - shoppers[i].SLoc.y) <= gShopperHeight)
+				        break;
+		if(j < shoppers.length) {
+			shoppers[i].SLoc.x = shoppers[j].SLoc.x - gShopperWidth;
+			if (shoppers[j].iSStatus == _CheckingOut || shoppers[j].iSStatus == _InLine)
+				if(shp.iSStatus != _InLine) {
+					shp.iSStatus = _InLine;
 					gCheckout[shp.iSTargetLine].iCLineLgth++;	//Line is longer by 1
 					gCheckout[shp.iSTargetLine].iCLineItemLgth += shp.iSItems;
 					gCheckout[shp.iSTargetLine].iCLineEndh -= gShopperWidth;
 				}
-				shp.SLoc.ih = igCheckouth;
-				shp.iSStatus = _CheckingOut;
+		}
+
+		//next check  for collision with checkout counter
+		if (shp.SLoc.x > igCheckouth - gShopperWidth) {
+			var AisleMiss = gCheckout[shp.iSTargetLine].iCv - shp.SLoc.y + _COffset;
+			if(Math.abs(AisleMiss) > 1)
+				shp.SLoc.x = igCheckouth - gShopperWidth;
+		}
+
+		//next check  for collision with store walls
+		if(shp.SLoc.y < 2) {
+			shp.SLoc.y = 2;
+			shp.iSTargetLine = 1;
+		}
+		if(shp.SLoc.y > 320)
+			shp.SLoc.y = 320;
+
+		//Has it reached the checkout?
+		if(shp.SLoc.x > igCheckouth) {	//Has it reached the checkout?
+			if(shp.iSStatus != _InLine && shp.iSStatus != _CheckingOut) {
+				gCheckout[shp.iSTargetLine].iCLineLgth++;	//Line is longer by 1
+				gCheckout[shp.iSTargetLine].iCLineItemLgth += shp.iSItems;
+				gCheckout[shp.iSTargetLine].iCLineEndh -= gShopperWidth;
 			}
+			shp.SLoc.x = igCheckouth;
+			shp.iSStatus = _CheckingOut;
 		}
 	}
+}
 //
-	function ShoppersDraw()
-	{
-		for(var i = 0; i < shoppers.length; i++) {
-		    var shp = shoppers[i];
-			drawShopper(shp.SLoc.ih, shp.SLoc.iv);
-			iPRINT(shp.SLoc.ih + _Textdx, shp.SLoc.iv + _Textdy, shp.iSItems);
-		}
-		//Moves shopper distance proportional to gInterval*igCartSpeed
-		//Unless there is a collision problem.
+function ShoppersDraw()
+{
+	for(var i = 0; i < shoppers.length; i++) {
+	    var shp = shoppers[i];
+		drawShopper(shp.SLoc.x, shp.SLoc.y);
+		iPRINT(shp.SLoc.x + _Textdx, shp.SLoc.y + _Textdy, shp.iSItems);
 	}
+	//Moves shopper distance proportional to gInterval*igCartSpeed
+	//Unless there is a collision problem.
+}
 
-    function RND(i) {  // [1,limit]
-        return 1+Math.floor(Math.random()*i);
-    }
+function RND(i) {  // [1,limit]
+    return 1+Math.floor(Math.random()*i);
+}
 
-	function PollWells()
-	{
-		var iprob = 1 + Math.floor(gWellSpeed / lgInterval);
-		if (gNbrWells >= 1)
-			for (var Well = 1; Well <= gNbrWells; Well++)
-				if(RND(iprob) == 1 && shoppers.length < _ShopperMax)
-					NewShopper(Well);
-	}
+function PollWells()
+{
+	var iprob = 1 + Math.floor(gWellSpeed / lgInterval);
+	if (gNbrWells >= 1)
+		for (var Well = 1; Well <= gNbrWells; Well++)
+			if(RND(iprob) == 1 && shoppers.length < _ShopperMax)
+				NewShopper(Well);
+}
 
-	function CheckVariables()
-	{
-		var rect = new Rect ();
-		if (gCNewLimitFlag) {
-			for (var Checkout = 1; Checkout <= gNbrCheckouts; Checkout++) {
-				switch (LEN (EDIT (Checkout))) {
-				case 0:
-					if (gCheckout[Checkout].iCMaxItems > 0) {
-						gCheckout[Checkout].iCMaxItems = 100;
-					}
-					break;
-				case 1:
-				case 2:
-					gCheckout[Checkout].iCMaxItems = VAL (EDIT (Checkout));
-					break;
-				default:
-					SETEDIT (Checkout, STR (gCheckout[Checkout].iCMaxItems));
+function CheckVariables()
+{
+	var rect = new Rect ();
+	if (gCNewLimitFlag) {
+		for (var Checkout = 1; Checkout <= gNbrCheckouts; Checkout++) {
+			switch (LEN (EDIT (Checkout))) {
+			case 0:
+				if (gCheckout[Checkout].iCMaxItems > 0) {
+					gCheckout[Checkout].iCMaxItems = 100;
+				}
+				break;
+			case 1:
+			case 2:
+				gCheckout[Checkout].iCMaxItems = VAL (EDIT (Checkout));
+				break;
+			default:
+				SETEDIT (Checkout, STR (gCheckout[Checkout].iCMaxItems));
 /*
-		String stxt;
-          if (VAL(EDIT(Checkout))>99) {
-            stxt=STR(gCheckout[Checkout].iCMaxItems);
-          } else {
-            stxt=STR(VAL(EDIT(Checkout)));
-          }
-          var Length=LEN(stxt);                        //Getting rid of that @%#$ leading blank
-          EDIT(Checkout)=RIGHT(STR(gCheckout[Checkout].iCMaxItems),Length-1);
-          EDIT FIELD #0
+	String stxt;
+      if (VAL(EDIT(Checkout))>99) {
+        stxt=STR(gCheckout[Checkout].iCMaxItems);
+      } else {
+        stxt=STR(VAL(EDIT(Checkout)));
+      }
+      var Length=LEN(stxt);                        //Getting rid of that @%#$ leading blank
+      EDIT(Checkout)=RIGHT(STR(gCheckout[Checkout].iCMaxItems),Length-1);
+      EDIT FIELD #0
 */
-					break;
-				}
-				if (gCheckout[Checkout].iCMaxItems < 100) {
-					var stmp;
-					if (gCheckout[Checkout].iCMaxItems > 0) {
-						SETRECT (rect, igCheckouth + 52, gCheckout[Checkout].iCv + 15, igCheckouth + 86, gCheckout[Checkout].iCv + 27);	//set initial rectangle
-						stmp = "Items";	//sSTR(gCheckout[Checkout].iCMaxItems)+" Items"
-					} else {
-						SETRECT (rect, igCheckouth + 52, gCheckout[Checkout].iCv + 5, igCheckouth + 86, gCheckout[Checkout].iCv + 26);	//set initial rectangle
-						stmp = "Next Aisle";	//sSTR(gCheckout[Checkout].iCMaxItems)+" Items"
-						SETEDIT (Checkout, "");
-					}
-					CBOX (rect, stmp);	//center justify
-				}
+				break;
 			}
-			gCNewLimitFlag = false;
+			if (gCheckout[Checkout].iCMaxItems < 100) {
+				var stmp;
+				if (gCheckout[Checkout].iCMaxItems > 0) {
+					SETRECT (rect, igCheckouth + 52, gCheckout[Checkout].iCv + 15, igCheckouth + 86, gCheckout[Checkout].iCv + 27);	//set initial rectangle
+					stmp = "Items";	//sSTR(gCheckout[Checkout].iCMaxItems)+" Items"
+				} else {
+					SETRECT (rect, igCheckouth + 52, gCheckout[Checkout].iCv + 5, igCheckouth + 86, gCheckout[Checkout].iCv + 26);	//set initial rectangle
+					stmp = "Next Aisle";	//sSTR(gCheckout[Checkout].iCMaxItems)+" Items"
+					SETEDIT (Checkout, "");
+				}
+				CBOX (rect, stmp);	//center justify
+			}
 		}
-		//Remove next chunk if edit fields for wells are ot used
-		if (gWNewLimitFlag) {
-			for (var Well = 1; Well <= gNbrWells; Well++) {
+		gCNewLimitFlag = false;
+	}
+	//Remove next chunk if edit fields for wells are ot used
+	if (gWNewLimitFlag) {
+		for (var Well = 1; Well <= gNbrWells; Well++) {
 /*				switch (LEN (EDIT (Well + 100))) {
-				case 0:
-					if (gWell[Well].WMaxItems > 0) {
-						gWell[Well].WMaxItems = 100;	//Change this?
-					}
-					break;
-				case 1:
-				case 2:
-					//gWell[Well].WMaxItems = VAL (EDIT (Well + 100));
-					break;
-				default:
-					SETEDIT (Well + 100, '' + gWell[Well].WMaxItems);
-					break;
-				}*/
-			}
-			gWNewLimitFlag = false;
+			case 0:
+				if (gWell[Well].WMaxItems > 0) {
+					gWell[Well].WMaxItems = 100;	//Change this?
+				}
+				break;
+			case 1:
+			case 2:
+				//gWell[Well].WMaxItems = VAL (EDIT (Well + 100));
+				break;
+			default:
+				SETEDIT (Well + 100, '' + gWell[Well].WMaxItems);
+				break;
+			}*/
 		}
+		gWNewLimitFlag = false;
 	}
+}
 
-	function ActionNullEvent()
-	{
-		if (igMoving) {
-			CheckVariables ();
-			ShoppersSearch ();	//Shoppers choose target lines
-			ShoppersSort ();	//Shoppers sorted by horizontal position;
-			CheckInterval ();	//How long since last move?
-			ShoppersCheckOut ();	//Check out items, eliminate empty carts
-			ShoppersMove ();	//New shopper positions calculated
-			ShoppersDraw ();
-			PollWells ();		//Randomly produce new shoppers from wells
+function ActionNullEvent()
+{
+	if (igMoving) {
+		CheckVariables ();
+		ShoppersSearch ();	//Shoppers choose target lines
+		CheckInterval ();	//How long since last move?
+		ShoppersCheckOut ();	//Check out items, eliminate empty carts
+		ShoppersMove ();	//New shopper positions calculated
+		ShoppersDraw ();
+		PollWells ();		//Randomly produce new shoppers from wells
 
-    		RefreshMain();
-		}
+		RefreshMain();
+ShowLinelength();
+ShowLineItemlength();
 	}
+}
 
 Initialize();
 setInterval(ActionNullEvent, 100);

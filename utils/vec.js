@@ -1,5 +1,9 @@
 function Vec(x, y) {
-    if(y == undefined) {
+    if(x == undefined) {
+        this.x = 0;
+        this.y = 0;
+    }
+    else if(y == undefined) {
         this.x = x.x;
         this.y = x.y;
     }
