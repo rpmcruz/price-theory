@@ -1,52 +1,56 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Hansa game</title>
-    <style>
-        /* layout */
+<title>Hansa game</title>
+<style>
+.wrap {width:700px; margin:0 auto;}
+svg {background:url("map.svg"); margin-bottom: 20px;}
+p.text {line-height: 150%;}
 
-        .wrap { width: 700px; margin: 0 auto; }
+svg circle.city {stroke-width:4; stroke:black; fill:white; cursor:pointer;}
+svg circle.city.locked {stroke:gray; cursor:default;}
+svg circle.city.player0 {fill:blue;}
+svg circle.city.player1 {fill:green;}
+svg circle.city.player2 {fill:saddlebrown;}
+svg circle.city.selected0 {stroke:blue;}
+svg circle.city.selected1 {stroke:green;}
 
-        .colcity { display: inline-block; width: 180px; vertical-align: top; }
-        .coltrade { display: inline-block; width: 330px; vertical-align: top; }
-        .centertrade { display: block; margin: 0 auto; width: 250px; }
+.colcity {display:inline-block; width:180px; vertical-align:top;}
+.coltrade {display:inline-block; width:330px; vertical-align:top;}
+.centertrade {display:block; margin:0 auto; width:250px;}
 
-        /* city and trade fields */
+/* city and trade fields */
 
-        p.citylabel { margin: 0 0 4px 0; font-weight: bold; }
+p.citylabel {margin:0 0 4px 0; font-weight:bold;}
 
-        /* city fields */
+/* city fields */
 
-        .label { padding-right: 4px; }
-        .value { border-style: solid; border-width: 2px; border-color: black; text-align: center; width: 100%; font-weight: bold; }
-        .maxvalue { color: gray; font-weight: normal; font-size: small; }
-        .showutility { border-style: solid; border-width: 2px; border-color: black; background-color: black; color: white; text-align: center; width: 100%; font-weight: bold; }
-        table { border-collapse: collapse; width: 100%; }
-        table td { padding: 0; }
+.label {padding-right:4px;}
+.value {border-style:solid; border-width:2px; border-color:black; text-align:center; width:100%; font-weight:bold;}
+.maxvalue {color:gray; font-weight:normal; font-size:small;}
+.showutility {border-style:solid; border-width:2px; border-color:black; background-color:black; color:white; text-align:center; width:100%; font-weight:bold;}
+table {border-collapse:collapse; width:100%;}
+table td {padding: 0;}
 
-        /* trade fields */
+/* trade fields */
 
-        input { width: 65%; height: 2ex; }
-        button { height: 3ex; vertical-align: middle; font-size: small; }
-        .linput0 { display: inline-block; width: 15%; text-align: left; }
-        .linput1 { display: inline-block; width: 15%; text-align: right; }
-        .proposebox { text-align: right; }
-        p.proposedesc { display: inline-block; font-size: small; margin: 0 0 0 0; vertical-align: middle; height: 100%; line-height: 90%; color: #424242; width: 8em; }
+input {width:65%; height:2ex;}
+button {height:3ex; vertical-align:middle; font-size:small;}
+.linput0 {display:inline-block; width:15%; text-align:left;}
+.linput1 {display:inline-block; width:15%; text-align:right;}
+.proposebox {text-align:right;}
+p.proposedesc {display:inline-block; font-size:small; margin:0 0 0 0; vertical-align:middle; height:100%; line-height:90%; color:#424242; width:8em;}
 
-        /* other fields */
+/* other fields */
 
-    	canvas { background: #979cab; margin-bottom: 20px; }
-        #turn { font-size: small; margin: 20px 0 60px 0; }
-        p.text { line-height: 150%; }
-    </style>
+#turn {font-size:small; margin:20px 0 60px 0;}
+</style>
 </head>
 
 <body>
 
 <div class="wrap">
-<canvas id="mycanvas" width="700" height="275">
-Your browser does not support the HTML5 canvas tag.
-</canvas>
+<svg width="700" height="275" />
 
 <!-- I wanted to use display:inline-block, but it was being too much of
      a pain. Now it's tables all the way down... -->
@@ -110,24 +114,68 @@ Your browser does not support the HTML5 canvas tag.
 <p class="text">The idea behind this game is in presenting the concept of comparative advantage. The concept was first introduced by David Ricardo, the son of Portuguese jewish refugees in Britain at a time when people were afraid free trade would mean Portugal would completely dominate England in trade. David Ricardo showed, together with a numerical example, how both Portugal and England could benefit from trade.</p>
 </div>
 
-<script src="../utils/rand.js"></script>
-<script src="../utils/mouse.js"></script>
-<script src="logic.js"></script>
+<script src="../pkgs/d3.min.js" charset="utf-8"></script>
+<script src="city.js"></script>
 <script src="view.js"></script>
 <script src="ai.js"></script>
 <script>
-//////////////////////////////// Initial Map Drawing
+//////////////////////////////// Initialization
 
-var img = new Image();
-img.onload = function() {
-    ctx.drawImage(img, 0, 0);
-    for(var i = 0; i < cities.length; i++)
-        cities[i].draw(ctx, 0, false);
-    setEnableCity(0, null);
-    setEnableCity(1, null);
-    setEnableTrade(null, null);
-}
-img.src = 'map.svg';
+var cities = [
+    new City(0, 'London', 357, 264),
+    new City(1, 'Hamburg', 468, 199),
+    new City(2, 'Lisbon', 36, 139),
+    new City(3, 'Madrid', 108, 98),
+    new City(4, 'Paris', 352, 176),
+    new City(5, 'Bologne', 377, 8),
+    new City(6, 'Prague', 420, 105),
+    new City(7, 'Antwerp', 405, 207),
+];
+
+for(var i = 0; i < cities.length; i++)
+    cities[i].postConstructor(cities);
+
+var selectedi = -1;
+var selected = [null, null];
+
+d3.select('svg')
+    .selectAll('city')
+    .data(cities)
+    .enter()
+    .append('circle')
+    .attr('class', 'city')
+    .attr('cx', function(city) {return city.x;})
+    .attr('cy', function(city) {return city.y;})
+    .attr('r', 10)
+    .on('mouseover', function() {
+        d3.select(this).attr('r', 14);
+    })
+    .on('mouseout', function() {       
+        d3.select(this)
+            .transition()
+            .duration(50)
+            .ease('linear')
+            .attr('r', 10);
+    })
+    .on('click', function(city) {
+        if(locked) return;
+
+        selectedi = (selectedi+1) % 2;
+        if(selected[selectedi] != null)
+            city.node.classed('selected' + selectedi, false);
+
+        selected[selectedi] = city;
+        city.node.classed('selected' + selectedi, true);
+
+        setEnableCity(selectedi, city);
+        setEnableTrade(selected[0], selected[1]);
+    })
+    .each(function(city) {city.node = d3.select(this);});
+
+// UI
+setEnableCity(0, null);
+setEnableCity(1, null);
+setEnableTrade(null, null);
 
 //////////////////////////////// Form Events
 
@@ -333,7 +381,7 @@ function lockMap() {
     locked = true;
     for(var i = 0; i < cities.length; i++)
         if(cities[i] != selected[0] && cities[i] != selected[1])
-            cities[i].draw(ctx, 0, true);
+            cities[i].node.classed('locked', true);
     if(selected[0] != null && selected[1] != null) {
         selected[0].save(0);
         selected[1].save(0);
@@ -344,64 +392,15 @@ function unlockMap() {
     locked = false;
     selected[0] = null;
     selected[1] = null;
-    for(var i = 0; i < cities.length; i++)
-        cities[i].draw(ctx, 0, false);
+    for(var i = 0; i < cities.length; i++) {
+        cities[i].node.classed('locked', false);
+        cities[i].node.classed('selected0', false);
+        cities[i].node.classed('selected1', false);
+    }
     setEnableCity(0, null);
     setEnableCity(1, null);
     setEnableTrade(null, null);
 }
-
-//////////////////////////////// Mouse Events
-
-function getCityUnder(mouse) {
-    // my android browser does not have Number.MAX_SAFE_INTEGER
-    var mindist = 1000;
-    var ret = null;
-    for(var i = 0; i < cities.length; i++) {
-        var city = cities[i];
-        var dist = Math.pow(mouse.x - city.x, 2) + Math.pow(mouse.y - city.y, 2);
-        if(dist < mindist) {
-            mindist = dist;
-            ret = city;
-        }
-    }
-    return ret;
-}
-
-var hover = null;
-var selected = [null, null];
-var selectedi = -1;
-
-canvas.addEventListener('mousemove', function(evt) {
-    if(locked) return;
-    var mouse = getMousePos(canvas, evt);
-    var city = getCityUnder(mouse);
-    if(hover != city) {
-        if(hover != null && hover != selected[0] && hover != selected[1])
-            hover.draw(ctx, 0);
-        canvas.style.cursor = city != null ? 'pointer' : 'auto';
-        if(city != null && city != selected[0] && city != selected[1])
-            city.draw(ctx, -1);
-        hover = city;
-    }
-});
-
-canvas.addEventListener('mousedown', function(evt) {
-    if(locked) return;
-    var mouse = getMousePos(canvas, evt);
-    var city = getCityUnder(mouse);
-    if(city != null && city != selected[0] && city != selected[1]) {
-        selectedi = (selectedi+1) % 2;
-        if(selected[selectedi] != null)
-            selected[selectedi].draw(ctx, 0);
-        selected[selectedi] = city;
-        city.draw(ctx, selectedi+1, false);
-
-        setEnableCity(selectedi, city);
-        setEnableTrade(selected[0], selected[1]);
-    }
-});
 </script>
-
 </body>
 </html>

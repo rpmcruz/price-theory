@@ -1,273 +1,189 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Elasticity game</title>
-    <style>
-        /* layout */
-
-        #wrap {
-            position: relative;
-            width: 670px;
-            margin: 0 auto;
-        }
-
-        table { display: inline-block; width: 300px; }
-        td { border: 1px solid black; }
-        table td.point { font-weight: bold; text-align: center; }
-
-        svg {
-            margin-right: 12px;
-            margin-bottom: 20px;
-            width: 350px;
-            height: 280px;
-        }
-        svg text {
-            font-size: small;
-            text-anchor: middle;
-        }
-        .line-group:hover .line-visible {
-            stroke-width: 2px;
-            cursor: pointer;
-        }
-        .line-group:hover .line-larger {
-            stroke: blue;
-            cursor: pointer;
-        }
-        .line-group:hover circle {
-            stroke: black;
-            stroke-width: 2px;
-        }
-        .line-visible {
-            stroke: black;
-        }
-        .line-larger {  /* clickable/hidden line */
-            stroke: white;
-            opacity: 0;
-            stroke-width: 15px;
-        }
-        svg .label {
-            font-size: small;
-            cursor: default;
-            dominant-baseline: middle;
-        }
-        svg line.axis {
-            stroke: black;
-            stroke-width: 1px;
-            shape-rendering: crispEdges;
-        }
-        svg circle {
-            fill: black;
-        }
-
-        p {
-            text-align: justify;
-        }
-    </style>
+<title>Elasticity game</title>
+<style>
+#plot {display:inline-block; font-size:14px;}
+.axis path, .axis line {fill:none; stroke:#000; shape-rendering:crispEdges;}
+table {display:inline-block;}
+tr {margin-bottom: 10px; transition:background-color 200ms;}
+tr.hl {background-color: rgb(220,220,220);}
+td {border-style:solid; border-width: 1px;}
+td.point {font-weight: bold;}
+</style>
 </head>
 
 <body>
-<div id="wrap">
-    <svg>
-        <text x="0" y="0" transform="translate(0,140), rotate(-90)" dominant-baseline="text-before-edge">Price of Wool</text>
-        <text x="175" y="280" dominant-baseline="text-after-edge">Quantity of Wool sold per year</text>
-        <line class="axis" x1="18" y1="0" x2="18" y2="262" />
-        <line class="axis" x1="18" y1="262" x2="350" y2="262" />
-        <circle id="dot0" r="5" />
-        <g class="line-group">
-            <line class="line-larger" id="line_1" />
-            <line class="line-visible" id="line1" />
-            <circle id="dot1" r="5" />
-        </g>
-        <g class="line-group">
-            <line class="line-larger" id="line_2" />
-            <line class="line-visible" id="line2" />
-            <circle id="dot2" r="5" />
-        </g>
-        <g class="line-group">
-            <line class="line-larger" id="line_3" />
-            <line class="line-visible" id="line3" />
-            <circle id="dot3" r="5" />
-        </g>
-        <g class="line-group">
-            <line class="line-larger" id="line_4" />
-            <line class="line-visible" id="line4" />
-            <circle id="dot4" r="5" />
-        </g>
-        <text class="label" id="label0">A</text>
-        <text class="label" id="label1">B</text>
-        <text class="label" id="label2">C</text>
-        <text class="label" id="label3">D</text>
-        <text class="label" id="label4">E</text>
-    </svg>
+<div id="plot"></div>
+<table></table>
 
-    <table id="table">
-        <tr><th>Point</th><th>Weather</th><th>Fashion</th><th>Meat Price</th></tr>
-        <tr><td id="point0" class="point">A</td><td></td><td></td><td></td></tr>
-        <tr><td id="point1" class="point">B</td><td></td><td></td><td></td></tr>
-        <tr><td id="point2" class="point">C</td><td></td><td></td><td></td></tr>
-        <tr><td id="point3" class="point">D</td><td></td><td></td><td></td></tr>
-        <tr><td id="point4" class="point">E</td><td></td><td></td><td></td></tr>
-    </table>
+<p id="text">Error: make sure you have Javascript enabled and your browser is updated.</p>
 
-<p>Ask for new price points, and then guess the demand curve!</p>
-
-<p>This game illustrates the concept of elasticity: try to find the supply and demand curves based on what they depend on.</p>
-
-</div>
-
-<script src="../utils/rand.js"></script>
+<script src="d3.min.js"></script>
 <script>
-// S - supply, D - demand
-// S(P) = beta0 + beta1.X1 + beta3.X3
-// D(P) = beta0 + beta2.X2 + beta3.X3
+var labels = ['Weather', 'Fashion', 'Meat Price'];
+var L1 = ['Terrible', 'Bad', 'Good', 'Great'];
+var L2 = ['Last Year', 'No', 'Yes', 'Very hip'];
+var L3 = ['$1.00', '$2.00', '$3.00', '$4.00'];
 
-var S_beta0 = randn(-10, 2)[0];
-var S_beta1 = randn(2, 1)[0];
+// S=supply, D=demand, P=price
+// Qs(P) = a0 + (a1*X0 + a2*X2)*P
+// Qd(P) = b0  + (b1*X1  + b2*X2)*P
 
-var D_beta0 = randn(60, 2)[0];
-var D_beta2 = randn(4, 1)[0];
+var A = [0, 2, 0, 1];
+var B = [100, 0, -2, -1];
 
-function Price(X1, X2) {
-    return 0.5 * ((D_beta0 + D_beta2*X2) - (S_beta0 + S_beta1*X1));
+function mult(v, u) {
+    var r = new Array(v.length);
+    for(var i = 0; i < v.length; i++)
+        r[i] = v[i]*u[i];
+    return r;
 }
 
-function Quantity(P, X1, X2) {
-    return S_beta0 + S_beta1*X1 + P;
+function P(X, A, B) {
+    var XA = mult(X, A);
+    var XB = mult(X, B);
+    return (XB[0]-XA[0]) / (XA[1]+XA[2]+XA[3]-(XB[1]+XB[2]+XB[3]));
 }
 
-var Pmin = Price(S_beta1 < 0 ? 0 : 3, D_beta2 < 0 ? 3 : 0);
-var Pmax = Price(S_beta1 > 0 ? 0 : 3, D_beta2 > 0 ? 3 : 0);
-
-var Qmin = Quantity(Pmin, S_beta1 < 0 ? 3 : 0, 0);
-var Qmax = Quantity(Pmax, S_beta1 > 0 ? 3 : 0, 0);
-
-function getPos(X) {
-    var P = Price(X[1], X[2]);
-    var Q = Quantity(P, X[1], X[2]);
-
-    var x = ((350-18)*(Q-Qmin)) / (Qmax-Qmin) + 18;
-    var y = (280-18) - (((280-18)*(P-Pmin)) / (Pmax-Pmin));
-    return {x: x, y: y};
+function Q(X, A, B) {
+    var XA = mult(X, A);
+    var XB = mult(X, B);
+    return XA[0] + (XA[1]+XA[2]+XA[3])*P(X, A, B);
 }
 
-function getLine(X, Y) {
-    var p0 = getPos(X);
-    var p1 = getPos(Y);
-    var m = (p1.y-p0.y) / (p1.x-p0.x);
-    var b = p1.y - m*p1.x;
-    return {x1: 0, y1: b, x2: 350, y2: 350*m+b};
-}
-
-Xs = fisher_yates(4*4);
-
-function getX(pt) {
-    var X1 = Math.floor(Xs[pt] / 4);
-    var X2 = Xs[pt] % 4;
-    return [0, X1, X2];
-}
-
-
-function weatherstr(i) {
-    switch(i) {
-        case 0: return 'Terrible';
-        case 1: return 'Bad';
-        case 2: return 'Good';
-        case 3: return 'Great';
-    }
-}
-
-function fashionstr(i) {
-    switch(i) {
-        case 0: return 'Last year';
-        case 1: return 'No';
-        case 2: return 'Yes';
-        case 3: return 'Very hip';
-    }
-}
-
-function meatpricestr(i) {
-    switch(i) {
-        case 0: return '$1.00';
-        case 1: return '$2.00';
-        case 2: return '$3.00';
-        case 3: return '$4.00';
-    }
-}
-
-// update points
-
-for(var i = 0; i < 5; i++) {
-    var X = getX(i);
-
-    var pt = getPos(X);
-
-    // points' dots
-
-    var e = document.getElementById('dot' + i);
-    e.setAttribute('cx', pt.x);
-    e.setAttribute('cy', pt.y);
-
-    // points' labels
-
-    var e = document.getElementById('label' + i);
-    var dy = pt.y < 20 ? 15 : -15;
-    e.setAttribute('x', pt.x);
-    e.setAttribute('y', pt.y+dy);
-
-    // lines to today's price
-
-    if(i > 0) {
-        var pts = getLine(getX(0), X);
-
-        var es = ['line', 'line_'];
-        for(var k = 0; k < es.length; k++) {
-            var e = document.getElementById(es[k] + i);
-            e.setAttribute('x1', pts.x1);
-            e.setAttribute('y1', pts.y1);
-            e.setAttribute('x2', pts.x2);
-            e.setAttribute('y2', pts.y2);
-        }
-    }
-
-    // table
-
-    var table = document.getElementById('table');
-    var row = table.rows[i+1];
-    row.cells[2].innerHTML = fashionstr(X[1]);
-    row.cells[3].innerHTML = meatpricestr(X[2]);
-}
-
-/*
-canvas.addEventListener('mousedown', function(evt) {
-    if(gameover)
-        return;
-    var pt = getMouseLine(getMousePos(canvas, evt));
-    if(pt > 0) {
-        XA = getX(0);
-        XB = getX(pt);
-        var q = document.getElementById('question');
-        if(XA[2] == XB[2]) {
-            q.innerHTML = "That's right !";
-            q.style.color = 'green';
-            q.style.fontWeight = 'bold';
-            document.getElementById('newbutton').disabled = true;
-            gameover = true;
-        }
-        else {
-            q.innerHTML = "That's not the demand curve !";
-            q.style.color = 'red';
-            if(curTimeout > 0)
-                clearTimeout(curTimeout);
-            setTimeout(function(t) {
-                q.innerHTML = '&nbsp;';
-                curTimeout = 0;
-            }, 1000);
-        }
-    }
-    tries += 1;
+var idx = d3.shuffle(d3.range(Math.pow(4, 3))).slice(0, 6);
+var Xs = idx.map(function(i) {
+    return [1, (i%4), (Math.floor(i/4)%4), Math.floor(i/16)];
 });
-*/
-</script>
 
+var Qmax = Q([1,3,0,0],A,B);
+var Pmax = P([1,3,0,0],A,B);
+
+// CREATE TABLE
+
+var table = d3.select('table');
+
+var tr = table.append('tr');
+tr.append('th').html('Point');
+tr.append('th').html('Weather');
+tr.append('th').html('Fashion');
+tr.append('th').html('Meat Price');
+
+function addPoints(Xs) {
+    // table
+    var tr = table.selectAll('tr.value').data(Xs)
+        .enter()
+        .append('tr')
+        .attr('class', 'value')
+        .on('mouseover', function(d, i) {
+            this.className = 'hl';
+            var g = svg.selectAll('.point')[0][i];
+            var t = g.childNodes[0];
+            d3.select(t).transition().duration(200).attr('r', 6);
+            t = g.childNodes[1];
+            d3.select(t).style('font-weight', 'bold');
+        })
+        .on('mouseout', function(d, i) {       
+            this.className = '';
+            var g = svg.selectAll('.point')[0][i];
+            var t = g.childNodes[0];
+            d3.select(t).transition().duration(200).attr('r', 4);
+            t = g.childNodes[1];
+            d3.select(t).style('font-weight', 'normal');
+        });
+    tr
+        .style('color', 'white')
+        .style('border-color', 'white')
+        .transition()
+        .duration(250)
+        .ease('linear')
+        .style('border-color', 'black')
+        .style('color', 'black');
+    tr.append('td')
+        .html(function(X, i) {return i == 0 ? 'P' : String.fromCharCode(64+i);})
+        .attr('class', 'point');
+    tr.append('td').html(function(X, i) {return L1[X[1]]});
+    tr.append('td').html(function(X, i) {return L2[X[2]]});
+    tr.append('td').html(function(X, i) {return L3[X[3]]});
+
+    // plot
+    var points = svg.selectAll('.point').data(Xs)
+        .enter()
+        .append('g')
+        .attr('class', 'point')
+        .attr('transform', function(X) {
+            return 'translate(' + x(Q(X, A, B)) + ',' + y(P(X, A, B)) + ')'});
+    points
+        .style('fill-opacity', 1e-6)
+        .transition()
+        .duration(250)
+        .ease('linear')
+        .style('fill-opacity', 1);
+    points.append('circle')
+        .attr('fill', 'black')
+        .attr('r', 4);
+    points.append('text')
+        .attr('dx', 5).attr('dy', 5)
+        .attr('dominant-baseline', 'text-before-edge')
+        .style('text-anchor', 'begin')
+        .style('cursor', 'default')
+        .text(function(X, i) {
+            return i == 0 ? 'P' : String.fromCharCode(64+i);
+        });
+}
+
+// CREATE PLOT
+
+var width = 350, height = 280;
+var margin = {top: 20, right: 20, bottom: 30, left: 40},
+    innerwidth = width - margin.left - margin.right,
+    innerheight = height - margin.top - margin.bottom;
+
+var x = d3.scale.linear().domain([0, Qmax]).range([0, innerwidth]);
+var y = d3.scale.linear().domain([0, Pmax]).range([innerheight, 0]);
+
+var xaxis = d3.svg.axis().scale(x).orient('bottom').ticks(4);
+var yaxis = d3.svg.axis().scale(y).orient('left').ticks(4);
+
+var svg = d3.select('#plot').append('svg')
+    .attr('width', width)
+    .attr('height', height)
+    .append('g')
+        .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+svg.append('g')
+    .attr('class', 'axis')
+    .attr('transform', 'translate(0,' + innerheight + ')')
+    .call(xaxis)
+    .append('text')
+        .attr('x', innerwidth)
+        .attr('y', -6)
+        .style('text-anchor', 'end')
+        .text('Quantity of Wool sold per year');
+svg.append('g')
+    .attr('class', 'axis')
+    .call(yaxis)
+    .append('text')
+        .attr('transform', 'rotate(-90)')
+        .attr('y', 6)
+        .attr('dy', '.71em')
+        .style('text-anchor', 'end')
+        .text('Price of Wool');
+
+// WRITE TEXT
+
+addPoints(Xs.slice(0, 1));
+
+d3.select('#text')
+    .html('Point <b>P</b> represents current price and quantity of wool. ')
+    .append('button')
+        .text('See historical points')
+        .on('click', function() {
+            addPoints(Xs);
+            d3.select('#text')
+                .html('Choose whichever point is in the same <u>demand</u> line as <b>P</b>.');
+        });
+</script>
 </body>
 </html>

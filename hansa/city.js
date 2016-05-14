@@ -7,7 +7,7 @@ measured in labor costs. Externally, we present everything in terms of
 quantities to the user.
 */
 
-var commodities = 2;
+const commodities = 2;
 
 function City(id, name, x, y) {
     this.id = id;
@@ -16,32 +16,24 @@ function City(id, name, x, y) {
     this.y = 275-y;
     // economic variables
     // population (pop) -- total laborers
-    this.pop = Math.round(randn(1000, 200)[0]);
+    this.pop = Math.round(d3.random.normal(1000, 200)());
     // productivity (z) -- products-per-laborer
-    var r = randn(1, 0.1);
     this.z = new Array(commodities);
-    for(var c = 0; c < commodities; c++)
-        this.z[c] = Math.max(0.1, r[c]);
+    var rnorm = d3.random.normal(1, 0.1);
+    for(var c = 0; c < commodities; c++) {
+        var r = rnorm();
+        this.z[c] = Math.max(0.1, r);
+    }
     this.league = -1;
 }
 
-var cities = [
-    new City(0, "London", 357, 264),
-    new City(1, "Hamburg", 468, 199),
-    new City(2, "Lisbon", 36, 139),
-    new City(3, "Madrid", 108, 98),
-    new City(4, "Paris", 352, 176),
-    new City(5, "Bologne", 377, 8),
-    new City(6, "Prague", 420, 105),
-    new City(7, "Antwerp", 405, 207),
-]
-
-// post-constructor
-for(var i = 0; i < cities.length; i++) {
-    cities[i].ex = new Array(commodities);
-    for(var c = 0; c < commodities; c++)
-        // exports, in laborers
-        cities[i].ex[c] = new Array(cities.length).fill(0);
+City.prototype.postConstructor = function(cities) {
+    for(var i = 0; i < cities.length; i++) {
+        cities[i].ex = new Array(commodities);
+        for(var c = 0; c < commodities; c++)
+            // exports, in laborers
+            cities[i].ex[c] = new Array(cities.length).fill(0);
+    }
 }
 
 City.prototype.save = function(player) {
@@ -69,7 +61,7 @@ City.prototype.accept = function() {
             for(var i = 0; i < cities.length; i++)
                 if(cities[i].league != this.league)
                     cities[i].ex[c][this.id] = 0;
-        this.draw(ctx, 0, false);
+        this.node.classed('player' + this.league, true);
     }
 }
 

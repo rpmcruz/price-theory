@@ -1,8 +1,3 @@
-function getRandomInt(min, max) {
-    // number between [min, max[
-    return Math.floor(Math.random() * (max - min)) + min;
-}
-
 // Returns winning player
 
 function hasWon() {
@@ -21,12 +16,12 @@ function computerTurn(player) {
 
     var city0, city1;
     do {
-        city0 = cities[getRandomInt(0, cities.length)];
-        city1 = cities[getRandomInt(0, cities.length)];
+        city0 = cities[Math.floor(Math.random()*cities.length)];
+        city1 = cities[Math.floor(Math.random()*cities.length)];
     } while(city0 == city1 || (city0.league == player && city1.league == player));
 
     var fraction = 0.10;
-    var c = getRandomInt(0, 2);
+    var c = Math.floor(Math.random()*2);
     city0.save(player);
     city1.save(player);
     city0.setExports(city1, c, city0.canExport(c)*fraction);

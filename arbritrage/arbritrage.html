@@ -1,76 +1,34 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Arbritage game</title>
-    <style>
-        #wrap {
-            width: 450px;
-            margin: 0 auto;
-        }
-        svg {
-            width: 100%;
-            height: 300px;
-            background-color: rgb(246,246,246);
-            padding: 10px;
-            margin-bottom: 20px;
-        }
-        svg g {
-            cursor: pointer;
-        }
-        svg g rect.box {
-            width: 100px;
-            height: 50px;
-            transform: translate(-50px, -25px);
-            stroke-width: 2px;
-        }
-        svg g rect.active {
-            fill: white;
-            stroke: black;
-        }
-        svg g:hover rect.active {
-            fill: black;
-        }
-        svg g rect.passive {
-            stroke: #5454ff;
-            fill: #dedeff;
-        }
-        svg g text.name {
-            transform: translate(0, -8px);
-        }
-        svg g text.value {
-            transform: translate(0, 8px);
-        }
-        svg g text {
-            text-anchor: middle;
-            dominant-baseline: central;
-        }
-        svg g:hover text.active {
-            fill: white;
-        }
-        svg g .visited {
-            fill: gray;
-        }
-        svg polygon {
-            fill: black;
-            fill-opacity: 0.4;
-        }
-        svg text.line {
-            fill: white;
-            font-size: small;
-        }
-        p {
-            text-align: justify;
-        }
-    </style>
+<title>Arbritrage</title>
+<style>
+g.node rect {fill:white; stroke:black; stroke-width:2; cursor:pointer;}
+g.node.now rect {fill:lightblue;}
+g.node.past rect {fill:lightgray;}
+@keyframes flash {
+    0% {fill:rgb(230,230,230);}
+    100% {fill:rgb(180,180,180);}
+}
+g.node:not(.now) rect:hover {
+    fill:lightgray;
+    animation-name: flash;
+	animation-duration: 1s;
+	animation-iteration-count: infinite;
+	animation-direction: alternate;
+	animation-timing-function: linear;
+}
+text {fill:black; text-anchor:middle; alignment-baseline:middle; pointer-events:none;}
+line {stroke:black; stroke-width:1;}
+g.price text {font-size:small;}
+</style>
 </head>
 
 <body>
-<div id="wrap">
-
-<svg />
+<div id="plot"></div>
 
 <p>Number of nodes:
-<select onchange="set_difficulty(this.value)">
+<select onchange="set_nodes(this.value)">
   <option value="3">3</option>
   <option value="4" selected>4</option>
   <option value="5">5</option>
@@ -78,285 +36,156 @@
 </select>
 </p>
 
-<p id="goal"></p>
-
-<p>This game illustrates how people can make money on arbritage. This is a barter economy (no money), but you could easily see how this would work in the currency market for instance (where too there is no measure of account and so can be seen as a barter economy) or even the stockmarket. In the long run, this bidding of prices up and down regulates prices.</p>
-</div>
-
-<script src="../utils/vec.js"></script>
+<script src="../pkgs/d3.min.js" charset="utf-8"></script>
+<script src="../pkgs/vec.js"></script>
+<script src="logic.js"></script>
 <script>
-var commodities = [
-    [
-        ['Ivory', 'Wine', 'Spices', 'Silk'],
-        ['kg', 'l', 'mg', 'g'],
-        'right', 'commodity',
-        'These represent some of the most traded commodities in the ancient world <a href="https://en.wikipedia.org/wiki/Ancient_maritime_history">[ref]</a>.'
-    ],
-    [
-        ['Crude Oil', 'Coffee', 'Natural Gas', 'Gold'],
-        ['bbl', 'lb', 'BTU', 'oz'],
-        'right', 'commodity',
-        'These are the most traded commodities in the world as of 2011 <a href="http://artasharakelyan.blogspot.pt/2011/10/top-5-most-traded-commodities-in-world.html">[ref]</a>.'
-    ],
-    [
-        ['US Dollar', 'Euro', 'Japanese Yen', 'British Pound'],
-        ['$', '\u20AC', '\u00A5', '\u00A3'],
-        'left', 'currency',
-        'These are the most traded currencies in the world <a href="http://www.bis.org/publ/rpfx13fx.pdf">[ref]</a>.'
-    ],
-];
+var width = 600, height = 500;
 
-/*var placements = [
-    [[50, 25], [400, 25], [225, 275]],
-    [[50, 25], [400, 25], [50, 275], [400, 275]],
-];
-*/
-var svg = document.getElementsByTagName('svg')[0];
+var svg = d3.select('#plot')
+    .append('svg')
+    .attr('width', width)
+    .attr('height', height)
+    .append('g')
+    .attr('transform', 'translate(' + (width/2) +  ',' + (height/2) + ')');
 
-function randint(min, max) {
-    return Math.floor((Math.random() * (max-min+1)) + min);
+//** Add nodes
+
+function nodePos(i, w, h) {
+    var angle = 2*Math.PI*i/logic.nodes;
+    angle += Math.PI;  // start from the left side
+    return [Math.cos(angle)*w, Math.sin(angle)*h];
 }
 
-function greatest_common_divisor(a, b) {  // euclid's algorithm
-    if(b == 0)
-        return a;
-    return greatest_common_divisor(b, a % b);
+function nodeSize(q) {
+    var r = 25 + 50*(0.2*q/100);
+    return [r*2, r];
 }
 
-function norm2(pt0, pt1) {
-    return Math.sqrt(Math.pow(pt0[0]-pt1[0], 2) + Math.pow(pt0[1]-pt1[1], 2));
+function fadein(element) {
+    element
+        .style('opacity', 0)
+        .transition()
+        .duration(150)
+        .ease('linear')
+        .style('opacity', 1);
 }
 
-var commodity;
-var quantities, prices;
-var groups, text, active;
-
-function lineBetweenNodes(A, B) {
-    var diff = A.sub(B).normalize();
-    A = A.add(diff.mult(new Vec(-70, -40)));
-    B = B.add(diff.mult(new Vec(+70, +40)));
-    return [A, B];
+function fadeout(element_class) {
+    svg.selectAll('.' + element_class)
+        .data([])
+        .exit()
+        .classed(element_class, false)
+        .transition()
+        .duration(150)
+        .ease('linear')
+        .style('opacity', 0);
 }
 
-function init(nodes) {
-    // initialize variables
+function set_nodes(nnodes) {
+    logic = new Logic(nnodes);
+    current = 0;
 
-    quantities = new Array(nodes);
-    quantities[0] = 100;
-    for(var i = 1; i < nodes; i++)
-        quantities[i] = 0;
+    fadeout('selnode');
+    fadeout('selprice');
 
-    // initialization of prices matrix is tricky: we only want one arbritrage
-    // opportunity which means prices assymetry through only one pathway
+    /* I have used selnode and selprice class names for selection purposes,
+       so that we can eliminate them while still allow stylesheeting. */
 
-    prices = new Array(nodes);
-    // 1. set all one
-    for(var i = 0; i < nodes; i++) {
-        prices[i] = new Array(nodes);
-        for(var j = 0; j < nodes; j++)
-            prices[i][j] = 1;
-    }
-    // 2. randomize it: we must randomize while keeping pathways symmetric
-    for(var i = 0; i < nodes; i++)
-        for(var j = 0; j < nodes; j++)
-            if(i != j) {
-                var u = Math.floor(Math.random() * 4);
-                prices[i][j] += u;
-                for(var l = 0; l < nodes; l++)
-                    if(l != i)
-                        prices[l][j] += u;
-            }
-    // 3. benefit one price so people can find an arbritrage pathway
-    var i = Math.floor(Math.random() * nodes);
-    var j = i;
-    while(i == j)
-        j = Math.floor(Math.random() * nodes);
-    prices[i][j] += 1 + Math.floor(Math.random() * 2);
-    // 4. normalize prices (dividing by greatest common divisor)
-    for(var i = 0; i < nodes; i++)
-        for(var j = 0; j < nodes; j++)
-            if(i != j) {
-                var gcd = greatest_common_divisor(prices[i][j], prices[j][i]);
-                prices[i][j] /= gcd;
-                prices[j][i] /= gcd;
-            }
-
-    // initialize graphics
-
-    var pos = new Array(nodes);
-    // setup arrangement of nodes
-    if(nodes == 3) {  // special case, triangle
-        pos[0] = new Vec(225, 20);
-        pos[1] = new Vec(45, 300-20);
-        pos[2] = new Vec(450-45, 300-20);
-    }
-    else
-        for(var i = 0; i < nodes; i++) {
-            var dx = Math.cos(Math.PI/2 + i*2*Math.PI/nodes);
-            var dy = Math.sin(Math.PI/2 + i*2*Math.PI/nodes);
-            var norm = Math.max(Math.abs(dx), Math.abs(dy));
-            pos[i] = new Vec(
-                225 + (255-75)*(dx/norm),
-                300 - (150 + (150-20)*(dy/norm)));
-        }
-
-    //commodity = commodities[Math.floor(Math.random() * commodities.length)];
-    // TEMP: put commodity
-    commodity = new Array(4);
-    commodity[0] = new Array(nodes);
-    commodity[1] = new Array(nodes);
-    for(var k = 0; k < nodes; k++) {
-        commodity[0][k] = String.fromCharCode(k + 65)+String.fromCharCode(k + 65)+String.fromCharCode(k + 65);
-        commodity[1][k] = String.fromCharCode(k + 97);
-    }
-    commodity[2] = 'right';
-    commodity[3] = '(unit)';
-    commodity[4] = 'TODO: some introduction.';
-
-    while(svg.lastChild)  // clear
-        svg.removeChild(svg.lastChild);
-
-    groups = new Array(nodes);
-    text = new Array(nodes);
-    active = 0;
-
-    for(var i = 0; i < nodes; i++) {
-        for(var j = i+1; j < nodes; j++) {
-            var e = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-
-            var pts = lineBetweenNodes(pos[i], pos[j]);
-            var diff = pos[i].sub(pos[j]).normalize();
-            var ortho = diff.orthogonal();
-
-            var p0 = prices[j][i];
-            var p1 = prices[i][j];
-            var w0 = 14*(2*p0)/(p0+p1);
-            var w1 = 14*(2*p1)/(p0+p1);
-            var pts = [
-                pts[0].add(ortho.mult(w0)),
-                pts[0].add(ortho.mult(-w0)),
-                pts[1].add(ortho.mult(-w1)),
-                pts[1].add(ortho.mult(w1))];
-            var s = '';
-            for(var k = 0; k < pts.length; k++) {
-                if(k > 0)
-                    s += ',';
-                s += pts[k].x + ',' + pts[k].y;
-            }
-            e.setAttribute('points', s);
-            svg.appendChild(e);
-        }
-        for(var j = 0; j < nodes; j++) {
-            if(i == j) continue;
-            var pts = lineBetweenNodes(pos[i], pos[j]);
-
-            var e = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            e.classList.add('line');
-
-            var p1, p2;
-            if(commodity[2] == 'left') {
-                p1 = commodity[1][i] + ' ' + prices[j][i];
-                p2 = commodity[1][j] + ' ' + prices[i][j];
-            }
-            else {
-                p1 = prices[j][i] + ' ' + commodity[1][i];
-                p2 = prices[i][j] + ' ' + commodity[1][j];
-            }
-
-
-            var t = p1;
-            e.textContent = t;
-
-            e.setAttribute('x', pts[0].x);
-            e.setAttribute('y', pts[0].y);
-
-            if(pos[i].y+1 < pos[j].y)  // up
-                e.setAttribute('dominant-baseline', 'text-before-edge');
-            else if(pos[i].y-1 > pos[j].y)  // down
-                e.setAttribute('dominant-baseline', 'text-after-edge');
-            else
-                e.setAttribute('dominant-baseline', 'central');
-
-            if(pos[i].x+1 < pos[j].x)  // left
-                e.setAttribute('text-anchor', 'start');
-            else if(pos[i].x-1 > pos[j].x)  // right
-                e.setAttribute('text-anchor', 'end');
-            else
-                e.setAttribute('text-anchor', 'middle');
-
-            svg.appendChild(e);
-        }
-
-        var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        var status = i == active ? 'passive' : 'active';
-        g.addEventListener('click', function() { node_clicked(event); }, false);
-
-        var e = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        e.classList.add('box');
-        e.classList.add(status);
-        e.setAttribute('x', pos[i].x);
-        e.setAttribute('y', pos[i].y);
-        g.appendChild(e);
-
-        e = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        e.classList.add('name');
-        e.classList.add(status);
-        e.textContent = commodity[0][i];
-        e.setAttribute('x', pos[i].x);
-        e.setAttribute('y', pos[i].y);
-        g.appendChild(e);
-
-        e = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        e.classList.add('value');
-        e.classList.add(status);
-        e.textContent = '0 ' + commodity[1][i];
-        e.setAttribute('x', pos[i].x);
-        e.setAttribute('y', pos[i].y);
-        g.appendChild(e);
-
-        text[i] = e;
-        groups[i] = g;
-        svg.appendChild(g);
-    }
-
-    document.getElementById('goal').innerHTML = commodity[4] + ' You must obtain 40 units of each ' + commodity[3] + ' by finding arbritage opportunities to finish the game.';
-}
-
-function sync() {
-    for(var i = 0; i < text.length; i++) {
-        if(commodity[2] == 'left')
-            text[i].textContent = commodity[1][i] + ' ' + quantities[i].toFixed();
+    var node = svg.selectAll('.selnode')
+        .data(logic.goods)
+        .enter()
+        .append('g')
+        .attr('class', 'selnode node')
+        .classed('now', function(d, i) {return i==0;})
+        .attr('transform', function(d, i) {
+            var p = nodePos(i, width/2-52, height/2-25);
+            return 'translate(' + p[0] +  ',' + p[1] + ')';
+        });
+    fadein(node);
+    node.on('click', function(d, i) {
+        if(current == i)
+            return;
+        var now = d3.select('.node.now');
+        var next = d3.select(this);
+        now.classed('now', false);
+        next.classed('now', true);
+        if(next.classed('past'))
+            next.classed('past', false);
         else
-            text[i].textContent = quantities[i].toFixed() + ' ' + commodity[1][i];
-        for(var k = 0; k < groups[i].children.length; k++) {
-            groups[i].children[k].classList.remove(i == active ? 'active' : 'passive');
-            groups[i].children[k].classList.add(i == active ? 'passive' : 'active');
-        }
+            now.classed('past', true);
+
+        var j = current;
+        var rate = logic.prices[j*logic.nodes+i].p/logic.prices[i*logic.nodes+j].p;
+        logic.goods[i].q = logic.goods[j].q * rate;
+        logic.goods[j].q = 0;
+        current = i;
+
+        svg.selectAll('.selnode rect')
+            .data(logic.goods)
+            .transition()
+            .duration(50)
+            .ease('linear')
+            .each(function(d, i) {
+                var size = nodeSize(d.q);
+                d3.select(this).transition().attr({
+                    x: -size[0]/2, y: -size[1]/2, width: size[0], height: size[1]})
+            });
+        svg.selectAll('.selnode text')
+            .data(logic.goods)
+            .text(function(d) {return d.q.toFixed();});
+    });
+    node.append('rect')
+        .each(function(d) {
+            var size = nodeSize(d.q);
+            d3.select(this).attr({
+                x: -size[0]/2, y: -size[1]/2, width: size[0], height: size[1]})
+        });
+    node.append('text')
+        .text(function(d) { return d.q; });
+
+    //** Add paths and prices
+
+    function priceDir(i, j) {
+        var I = nodePos(i, width/2-52, height/2-25);
+        var J = nodePos(j, width/2-52, height/2-25);
+        return I.sub(J).normalize();
     }
+
+    function pricePos(i, j, offset) {
+        var I = nodePos(i, width/2-52*offset, height/2-25*offset);
+        return I.sub(priceDir(i, j).mult([70, 40]));
+    }
+
+    var price = svg.selectAll('.selprice')
+        .data(logic.prices.filter(function(d) {return d.i != d.j;}))
+        .enter()
+        .append('g')
+        .attr('class', 'selprice price');
+    fadein(price);
+    price.append('line')
+        .attr('x1', function(d, i) {return pricePos(d.i, d.j, 2)[0];})
+        .attr('y1', function(d) {return pricePos(d.i, d.j, 2)[1];})
+        .attr('x2', function(d) {return pricePos(d.j, d.i, 2)[0];})
+        .attr('y2', function(d) {return pricePos(d.j, d.i, 2)[1];});
+    price.append('path')
+        .attr('transform', function(d) {
+            var u = priceDir(d.i, d.j);
+            var p = pricePos(d.i, d.j, 2);
+            var angle = Math.atan2(u[1], u[0]) * 180/Math.PI;
+            return 'translate(' + p[0] + ',' + p[1] + '), rotate(' + angle + '), scale(' + 15*(0.2+0.8*d.p/10) + ')';
+        })
+        .attr('d', 'M0,-1 L2,0 L0,1');
+    price.append('text')
+        .attr('x', function(d) {return pricePos(d.i, d.j, 1)[0];})
+        .attr('y', function(d) {return pricePos(d.i, d.j, 1)[1];})
+        .text(function(d) {
+            return logic.prices[d.j*logic.nodes+d.i].p + ' = ' + d.p;
+        });
 }
 
-init(4);
-sync();
-
-function node_clicked(event) {
-    groups[active].classList.add('visited');
-
-    var i = active;
-    var j;
-    // ugly way to get id of clicked object
-    for(j = 0; ; j++)
-        if(groups[j] == event.target.parentNode)
-            break;
-    quantities[j] = (prices[i][j] * quantities[i]) / prices[j][i];
-    quantities[i] = 0;
-    active = j;
-    sync();
-}
-
-function set_difficulty(level) {
-    init(level);
-    sync();
-}
+var logic, current;
+set_nodes(4);
 </script>
 </body>
 </html>
