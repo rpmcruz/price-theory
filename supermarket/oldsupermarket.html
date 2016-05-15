@@ -24,7 +24,7 @@ Your browser does not support the HTML5 canvas tag.
 </canvas>
 </div>
 
-<script src="../utils/vec.js"></script>
+<script src="../pkgs/vec.js"></script>
 <script>
 //***To Do List***
 //Search Strategies--nearest, line of sight, all, endogenous
@@ -76,7 +76,7 @@ const _CountItems = 2;
 
 function Shopper()
 {
-	this.SLoc = new Vec();				//fields;  iv,ih
+	this.SLoc = new Array(2);				//fields;  iv,ih
 	this.iSItems = 0;			//how many items in the cart?
 	this.iSStatus = 0;			//Out, Shopping, Searching, or in line
 	this.iSOldStatus = 0;
@@ -99,7 +99,7 @@ function Checkout()
 //
 function Well()
 {
-	this.WLoc = new Vec();				//fields;  iv,ih
+	this.WLoc = new Array(2);				//fields;  iv,ih
 	this.WMaxItems = 0;			//Largest # of items for shoppers from that well
 	this.iWStatus = 0;			//Is well active or not
 }

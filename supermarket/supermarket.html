@@ -48,7 +48,7 @@ Your browser does not support the HTML5 canvas tag.
 <p class="text">Watch the impact of two different line search strategies. In the smart strategy, carts infer the time it will take from the length of the lines times numbers of groceries in the last cart of the line. In the dumb strategy (dash line), carts do not choose. If not many people are following &ldquo;dumb&rdquo; strategy, is this strategy really that dumb? Probably it is rational to consider that the searching time is not worth the pay off because lines should already be balanced out.</p>
 </div>
 
-<script src="../utils/rand.js"></script>
+<script src="../pkgs/d3.min.js" charset="utf-8"></script>
 <script>
 var canvas = document.getElementById('mycanvas');
 var ctx = canvas.getContext('2d');
@@ -69,7 +69,7 @@ var counter = 0;
 var stupid = 0;
 
 function Cart() {
-    this.n = Math.round(Math.max(5, randn(25, 10)[0]));
+    this.n = Math.round(Math.max(5, d3.random.normal(25, 10)()));
     var line = Math.floor((Math.random()*queues));
     this.x = 2;
     this.y = (line+0.5) * queue_h;
