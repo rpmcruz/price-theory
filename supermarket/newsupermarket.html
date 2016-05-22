@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Supermarket</title>
+<style>
+svg {width:500px; height:200px;}
+</style>
+</head>
+
+<body>
+<svg>
+<!--
+<defs>
+<path id="cart" d="M 0,20 l25,20 100,0 0,-40 -100,0 z" />
+</defs>
+<g transform="rotate(10)">
+<use xlink:href="#cart" fill="black" x="100" y="50" />
+</g>
+-->
+</svg>
+
+<script src="../pkgs/d3.min.js" charset="utf-8"></script>
+<script>
+const CHECKLINES = 4;
+const CART_WIDTH = 20, CART_HEIGHT = 20;
+const DT = 50;
+
+function overlaps(xA, yA, xB, yB) {
+    return xA < xB+CART_WIDTH && xA+CART_WIDTH > xB &&
+           yA < yB+CART_HEIGHT && yA+CART_HEIGHT > yB;
+}
+
+function Agent() {
+    this.checklines = new Array(CHECKLINES);
+    this.node = d3.select('svg').append('rect')
+        .attr('fill', 'none')
+        .attr('stroke', 'black')
+        .attr('stroke-width', 2);
+    this.setPos(20, 100);
+}
+
+Agent.prototype.setPos = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.node
+        .attr('x', x - CART_WIDTH/2+2)
+        .attr('y', y - CART_WIDTH/2+2)
+        .attr('width', CART_WIDTH-4)
+        .attr('height', CART_HEIGHT-4);
+}
+
+Agent.prototype.move = function(dx, dy) {
+    var nx = this.x+dx, ny = this.y+dy;
+    for(var i = 0; i < agents.length; i++) {
+        if(overlaps(nx, ny, agents[i].x, agents[i].y))
+{
+console.log('collided - change pos');
+            nx = agents[i].x - CART_WIDTH;
+}
+    }
+    this.setPos(nx, ny);
+}
+
+Agent.prototype.step = function() {
+    if(this.x < 400)
+        this.move(8*DT/100, 0);
+}
+
+agents = [];
+
+function update() {
+    for(var i = 0; i < agents.length; i++)
+        agents[i].step();
+}
+
+function newAgent() {
+    if(agents.length < 2)  // TEMP
+        agents.push(new Agent());
+}
+
+setInterval(update, DT);
+setInterval(newAgent, 1000);
+</script>
+</body>
+</html>
