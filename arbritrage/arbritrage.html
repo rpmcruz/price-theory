@@ -4,6 +4,8 @@
 <title>Arbritrage</title>
 <style>
 g.node rect {fill:white; stroke:black; stroke-width:2; cursor:pointer;}
+g.selnode text.name {transform:translate(0px,-6px);}
+g.selnode text.q {transform:translate(0px,6px);}
 g.node.now rect {fill:lightblue;}
 g.node.past rect {fill:lightgray;}
 @keyframes flash {
@@ -39,6 +41,7 @@ g.price text {font-size:small;}
 <script src="../pkgs/d3.min.js" charset="utf-8"></script>
 <script src="../pkgs/vec.js"></script>
 <script src="logic.js"></script>
+<script src="database.js"></script>
 <script>
 var width = 600, height = 500;
 
@@ -83,6 +86,7 @@ function fadeout(element_class) {
 }
 
 function set_nodes(nnodes) {
+    var commodity = commodities[Math.floor(Math.random()*commodities.length)];
     logic = new Logic(nnodes);
     current = 0;
 
@@ -121,7 +125,7 @@ function set_nodes(nnodes) {
         logic.goods[j].q = 0;
         current = i;
 
-        svg.selectAll('.selnode rect')
+        svg.selectAll('g.selnode rect')
             .data(logic.goods)
             .transition()
             .duration(50)
@@ -131,7 +135,7 @@ function set_nodes(nnodes) {
                 d3.select(this).transition().attr({
                     x: -size[0]/2, y: -size[1]/2, width: size[0], height: size[1]})
             });
-        svg.selectAll('.selnode text')
+        svg.selectAll('g.selnode text.q')
             .data(logic.goods)
             .text(function(d) {return d.q.toFixed();});
     });
@@ -142,7 +146,11 @@ function set_nodes(nnodes) {
                 x: -size[0]/2, y: -size[1]/2, width: size[0], height: size[1]})
         });
     node.append('text')
+        .attr('class', 'q')
         .text(function(d) { return d.q; });
+    node.append('text')
+        .attr('class', 'name')
+        .text(function(d, i) {return commodity.nodes[i];});
 
     //** Add paths and prices
 
@@ -180,7 +188,14 @@ function set_nodes(nnodes) {
         .attr('x', function(d) {return pricePos(d.i, d.j, 1)[0];})
         .attr('y', function(d) {return pricePos(d.i, d.j, 1)[1];})
         .text(function(d) {
-            return logic.prices[d.j*logic.nodes+d.i].p + ' = ' + d.p;
+            var unit1 = commodity.units[d.i];
+            var unit2 = commodity.units[d.j];
+            var p1 = logic.prices[d.j*logic.nodes+d.i].p;
+            var p2 = d.p;
+            if(commodity.unitssign == 'left')
+                return unit1 + ' ' + p1 + ' = ' + unit2 + ' ' + p2;
+            // else - right
+            return p1 + ' ' + unit1 + ' = ' + p2 + ' ' + unit2;
         });
 }
 

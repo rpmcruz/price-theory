@@ -13,7 +13,6 @@ function Logic(nodes) {
     this.goods = [];
     for(var i = 0; i < nodes; i++)
         this.goods.push({
-            name: String.fromCharCode(65+i), 
             q: i == 0 ? 100 : 0
         });
 
@@ -24,7 +23,7 @@ function Logic(nodes) {
     // 1. set all one
     for(var i = 0; i < nodes; i++)
         for(var j = 0; j < nodes; j++)
-            this.prices[i*nodes+j] = {i: i, j: j, p: 1};
+            this.prices[i*nodes+j] = {i:i, j:j, p:1};
     // 2. randomize it: we must randomize while keeping pathways symmetric
     for(var i = 0; i < nodes; i++)
         for(var j = 0; j < nodes; j++)
