@@ -14,5 +14,6 @@ Current Progress:
 3. [Supermarket](https://github.com/rpmcruz/price-theory/wiki/Supermarket)
 4. [Arbritrage](https://github.com/rpmcruz/price-theory/wiki/Arbritrage)
 5. [Dynamic Graphics](https://github.com/rpmcruz/price-theory/wiki/Dynamic%20Graphics)
+6. [Utility](https://github.com/rpmcruz/price-theory/wiki/Utility)
 
 Our mailing list: [price-theory@googlegroups.com](https://groups.google.com/d/forum/price-theory). **Join up!**
