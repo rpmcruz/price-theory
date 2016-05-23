@@ -3,6 +3,7 @@
 <head>
 <title>Utility game</title>
 <style>
+body {width:280px; margin:0 auto;}
 #plot {display:inline-block;}
 svg circle.face {stroke:black; stroke-width:5px; fill:yellow;}
 svg circle.eye {fill:black;}
@@ -49,6 +50,9 @@ svg.append('path')
 d3.select('#slider').on('input', function() {
     smile[0].y = smile[2].y = -30*(this.value/10);
     svg.selectAll('.smile')
+        .transition()
+        .ease('linear')
+        .duration(200)
         .attr('d', lineFunction(smile));
     d3.select('#utility').text(this.value);
 });
