@@ -3,6 +3,7 @@
 <head>
 <title>Arbritrage</title>
 <style>
+body {width:600px; margin:0 auto;}
 g.node rect {fill:white; stroke:black; stroke-width:2; cursor:pointer;}
 g.selnode text.name {transform:translate(0px,-6px);}
 g.selnode text.q {transform:translate(0px,6px);}
@@ -20,8 +21,8 @@ g.node:not(.now) rect:hover {
 	animation-direction:alternate;
 	animation-timing-function:linear;
 }
-text {fill:black; text-anchor:middle; alignment-baseline:middle; pointer-events:none;}
-line {stroke:black; stroke-width:1;}
+svg text {fill:black; text-anchor:middle; alignment-baseline:middle; pointer-events:none;}
+svg line {stroke:black; stroke-width:1;}
 g.price text {font-size:small;}
 </style>
 </head>
@@ -36,6 +37,10 @@ g.price text {font-size:small;}
   <option value="5">5</option>
   <option value="6">6</option>
 </select>
+
+<p id="description"></p>
+
+<p>This game illustrates how people can make money on arbritage. This is a barter economy (no money), but you could easily see how this would work in the currency market for instance (where too there is no measure of account and so can be seen as a barter economy) or even the stockmarket. In the long run, this bidding of prices up and down regulates prices.</p>
 </p>
 
 <script src="../pkgs/d3.min.js" charset="utf-8"></script>
@@ -197,6 +202,8 @@ function set_nodes(nnodes) {
             // else - right
             return p1 + ' ' + unit1 + ' = ' + p2 + ' ' + unit2;
         });
+
+    d3.select('#description').html(commodity.description);
 }
 
 var logic, current;
