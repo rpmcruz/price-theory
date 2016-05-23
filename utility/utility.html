@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Utility game</title>
+<style>
+#plot {display:inline-block;}
+svg circle.face {stroke:black; stroke-width:5px; fill:yellow;}
+svg circle.eye {fill:black;}
+svg path.smile {stroke:black; stroke-width:5px; fill:none;}
+</style>
+</head>
+
+<body>
+<div id="plot"></div>
+
+<p>Consumption: <input id="slider" type="range" value="0" min="-10" max="10" /></p>
+<p>Utility: <span id="utility">0</span></p>
+
+<script src="../pkgs/d3.min.js"></script>
+<script>
+var width = 280, height = 280;
+
+var svg = d3.select('#plot').append('svg')
+    .attr('width', width)
+    .attr('height', height)
+    .append('g')
+    .attr('transform', 'translate(' + (width/2) + ',' + (height/2) + ')');
+
+svg.append('circle').attr('class', 'face').attr('r', Math.min(width, height)/2-5);
+svg.append('circle').attr('class', 'eye').attr('r', 20).attr('cx', -50).attr('cy', -50);
+svg.append('circle').attr('class', 'eye').attr('r', 20).attr('cx', +50).attr('cy', -50);
+
+var smile = [
+    {x: -85, y: 0},
+    {x: 0, y: 0},
+    {x: +85, y: 0},
+];
+
+var lineFunction = d3.svg.line()
+    .interpolate('monotone')
+    .x(function(d) {return d.x;})
+    .y(function(d) {return d.y;});
+
+svg.append('path')
+    .attr('class', 'smile')
+    .attr('transform', 'translate(0, 60)')
+    .attr('d', lineFunction(smile));
+
+d3.select('#slider').on('input', function() {
+    smile[0].y = smile[2].y = -30*(this.value/10);
+    svg.selectAll('.smile')
+        .attr('d', lineFunction(smile));
+    d3.select('#utility').text(this.value);
+});
+</script>
+</body>
+</html>
