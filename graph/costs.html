@@ -3,19 +3,20 @@
 <title>Plot Test from the Book</title>
 <script src='../pkgs/d3.min.js'></script>
 <style>
-path.AC, path.MC {stroke:black; stroke-width:2; fill:none;}
-path.TC {stroke:red; fill:none;}
-.x.axis line, .x.axis path {shape-rendering:crispEdges; fill:none; stroke:black;}
-.y.axis line, .y.axis path {shape-rendering:crispEdges; fill:none; stroke:red;}
+.x.axis line, .x.axis path {stroke:black;}
+.y.axis line, .y.axis path {stroke:red;}
+.axis line, .axis path {shape-rendering:crispEdges; fill:none;}
 .y.axis text {fill:red;}
+path.line {stroke-width:2; fill:none;}
+path.AC, path.MC {stroke:black;}
+path.TC {stroke:red; fill:none;}
+/* adding invisible stroke border to make the point easier to drag */
+circle.TC {fill:red; stroke-width:20; stroke:black; stroke-opacity:0;}
+circle.intersection {stroke:black; fill:white; stroke-width:2;}
 </style>
 </head>
 <body>
-
-
-<div id="graph" class="aGraph" style="position:absolute;top:0px;left:0; float:left;"></div>
-
-
+<div id="graph"></div>
 <script>
 const MARGIN = {top:10, left:50, bottom:20, right:15};
 const WIDTH = 600 - MARGIN.left - MARGIN.right;
@@ -53,59 +54,69 @@ graph.append('g')
     .attr('transform', 'translate(0,0)')
     .call(yaxis);
 
-var mc = graph.append('path').attr('class', 'MC').attr('d', line(MC));
-var ac = graph.append('path').attr('class', 'AC').attr('d', line(AC));
+var mc = graph.append('path').attr('class', 'MC line').attr('d', line(MC));
+var ac = graph.append('path').attr('class', 'AC line').attr('d', line(AC));
 
-var path = graph.selectAll('path.TC')
+dragListener = d3.behavior.drag()
+    .on('dragstart', function(d) {
+        d3.event.sourceEvent.stopPropagation();
+        d3.select(this).classed('dragging', true);
+    })
+    .on('drag', function(d, i) {
+        var x = d3.event.x, y = d3.event.y;
+        x = Math.min(Math.max(x, xscale(TC[i][0])), xscale(TC[i+2][0]));
+        d[0] = xscale.invert(x);
+        d[1] = yscale.invert(y);
+        d3.select(this).attr('cx', x).attr('cy', y);
+
+        var path = graph.selectAll('path.TC')
+            .data([TC])
+            .attr('d', function(d) {return line(d);});
+    })
+    .on('dragend', function(d) {
+        d3.select(this).classed('dragging', false);
+    });
+
+// overlay hack to make sure there is always something under the mouse
+graph.append('rect')
+    .attr('class', 'overlay')
+    .attr('width', WIDTH)
+    .attr('height', HEIGHT)
+    .attr('fill', 'none')
+graph
+    .attr('pointer-events', 'all')
+    .on('mouseover', function() {
+        graph.selectAll('circle.TC').
+            transition()
+            .delay(50)
+            .ease('linear')
+            .attr('r', 5);
+    })
+    .on('mouseout', function() {
+        graph.selectAll('circle.TC').
+            transition()
+            .delay(100)
+            .ease('linear')
+            .attr('r', 0);
+    });
+
+var controls = graph.selectAll('circle.TC')
+    .data(TC)
+    .enter()
+    .append('circle')
+    .filter(function(d) {return d[0] > 0 && d[0] < LIM[0];})
+    .attr('class', 'TC')
+    .attr('cx', function(d) {return xscale(d[0]);})
+    .attr('cy', function(d) {return yscale(d[1]);})
+    .attr('r', 0)
+    .call(dragListener);
+
+graph.selectAll('path.TC')
     .data([TC])
     .enter()
     .append('path')
-    .attr('class', 'TC')
-    .attr('d', function(d) {return line(d);})
-    .attr('stroke-width', 3)
-    .attr('cursor', 'crosshair')
-    .on('mouseover', function() {
-        d3.select(this)
-            .transition()
-            .ease('linear')
-            .duration(100)
-            .attr('stroke-width', 6);
-    })
-    .on('mouseout', function() {
-        d3.select(this)
-            .transition()
-            .ease('linear')
-            .duration(100)
-            .attr('stroke-width', 3);
-    });
-/*
-// TODO: allow mouse clicking
-// - see if there is a close point, and move it
-// otherwise add new point to curve hehe
-    .on('mousedown', function() {
-        var p = d3.mouse(this);
-        p = [xscale.invert(p[0]), yscale.invert(p[1])];
-        var mindist = Infinity;
-        var mini = 0;
-        for(var i = 0; i < TC.length; i++) {
-            var dist = Math.pow(TC[i][0]-p[0], 2) + Math.pow(TC[i][1]-p[1], 2);
-            if(dist < mindist) {
-                mindist = dist;
-                mini = i;
-            }
-        }
-        TC[i] = p;
-
-        var path = graph.selectAll('path.TC')
-            .data([TC]);
-        path.enter()
-            .append('path')
-            .attr('class', 'TC')
-            .attr('d', function(d) {return line(d);})
-            .attr('stroke-width', 3)
-        path.exit().remove();
-    });
-*/
+    .attr('class', 'TC line')
+    .attr('d', function(d) {return line(d);});
 
 function getIntersection(c1, c2) {
     // pretty fast code to find the intersection between two SVG paths
@@ -131,11 +142,9 @@ function getIntersection(c1, c2) {
 var pt = getIntersection(ac, mc);
 if(pt != null)
     graph.append('circle')
+        .attr('class', 'intersection')
         .attr('cx', pt.x)
         .attr('cy', pt.y)
-        .attr('fill', 'white')
-        .attr('stroke', 'black')
-        .attr('stroke-width', 2)
         .attr('r', 6);
 </script>
 </body>
