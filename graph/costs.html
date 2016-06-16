@@ -11,7 +11,7 @@ path.line {stroke-width:2; fill:none;}
 path.AC, path.MC {stroke:black;}
 path.TC {stroke:red; fill:none;}
 /* adding invisible stroke border to make the point easier to drag */
-circle.TC {fill:red; stroke-width:20; stroke:black; stroke-opacity:0;}
+circle.TC {fill:red; stroke-width:20; stroke:black; stroke-opacity:0; cursor:move;}
 circle.intersection {stroke:black; fill:white; stroke-width:2;}
 </style>
 </head>
@@ -100,6 +100,13 @@ graph
             .attr('r', 0);
     });
 
+graph.selectAll('path.TC')
+    .data([TC])
+    .enter()
+    .append('path')
+    .attr('class', 'TC line')
+    .attr('d', function(d) {return line(d);});
+
 var controls = graph.selectAll('circle.TC')
     .data(TC)
     .enter()
@@ -110,13 +117,6 @@ var controls = graph.selectAll('circle.TC')
     .attr('cy', function(d) {return yscale(d[1]);})
     .attr('r', 0)
     .call(dragListener);
-
-graph.selectAll('path.TC')
-    .data([TC])
-    .enter()
-    .append('path')
-    .attr('class', 'TC line')
-    .attr('d', function(d) {return line(d);});
 
 function getIntersection(c1, c2) {
     // pretty fast code to find the intersection between two SVG paths
