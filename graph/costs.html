@@ -7,6 +7,7 @@
 .y.axis line, .y.axis path {stroke:red;}
 .axis line, .axis path {shape-rendering:crispEdges; fill:none;}
 .y.axis text {fill:red;}
+text.y.title {fill:red;}
 path.line {stroke-width:2; fill:none;}
 path.AC, path.MC {stroke:black;}
 path.TC {stroke:red; fill:none;}
@@ -18,9 +19,9 @@ circle.intersection {stroke:black; fill:white; stroke-width:2;}
 <body>
 <div id="graph"></div>
 <script>
-const MARGIN = {top:10, left:50, bottom:20, right:15};
+const MARGIN = {top:10, left:75, bottom:60, right:15};
 const WIDTH = 600 - MARGIN.left - MARGIN.right;
-const HEIGHT = 400 - MARGIN.top - MARGIN.bottom;
+const HEIGHT = 350 - MARGIN.top - MARGIN.bottom;
 
 const MC = [[0, 1000], [100, 100], [200, 1750]];
 const AC = [[0, 2200], [150, 500], [200, 600]];
@@ -36,10 +37,11 @@ var line = d3.svg.line()
     .y(function(d) {return yscale(d[1]);})
     .interpolate('monotone');
 
-var graph = d3.select('#graph').append('svg')
+var svg = d3.select('#graph').append('svg')
     .attr('width', WIDTH + MARGIN.left + MARGIN.right)
     .attr('height', HEIGHT + MARGIN.top + MARGIN.bottom)
-    .append('g')
+
+var graph = svg.append('g')
     .attr('transform', 'translate(' + MARGIN.left + ',' + MARGIN.top + ')');
 
 var xaxis = d3.svg.axis().scale(xscale).orient('bottom');
@@ -53,6 +55,20 @@ graph.append('g')
     .attr('class', 'y axis')
     .attr('transform', 'translate(0,0)')
     .call(yaxis);
+
+svg.append('text')
+    .attr('class', 'y title')
+    .attr('alignment-baseline', 'text-before-edge')
+    .attr('text-anchor', 'middle')
+    .attr('transform', 'translate(0,'+(HEIGHT/2)+')rotate(-90)')
+    .text('Dollars per year');
+
+graph.append('text')
+    .attr('class', 'x title')
+    .attr('alignment-baseline', 'text-after-edge')
+    .attr('text-anchor', 'middle')
+    .attr('transform', 'translate('+(WIDTH/2)+',' + (HEIGHT+MARGIN.bottom-5) + ')')
+    .text('Widgets per year');
 
 var mc = graph.append('path').attr('class', 'MC line').attr('d', line(MC));
 var ac = graph.append('path').attr('class', 'AC line').attr('d', line(AC));
