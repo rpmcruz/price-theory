@@ -1,167 +1,25 @@
 <html>
 <head>
 <title>Plot Test from the Book</title>
-<script src='../pkgs/d3.min.js'></script>
-<style>
-.x.axis line, .x.axis path {stroke:black;}
-.y.axis line, .y.axis path {stroke:red;}
-.axis line, .axis path {shape-rendering:crispEdges; fill:none;}
-.y.axis text {fill:red;}
-text.y.title {fill:red;}
-path.line {stroke-width:2; fill:none;}
-path.AC, path.MC {stroke:black;}
-path.TC {stroke:red; fill:none;}
-/* adding invisible stroke border to make the point easier to drag */
-circle.TC {fill:red; stroke-width:20; stroke:black; stroke-opacity:0; cursor:move;}
-circle.intersection {stroke:black; fill:white; stroke-width:2;}
-</style>
+<link rel="stylesheet" type="text/css" href="dynplot.css">
 </head>
 <body>
 <div id="graph"></div>
+<script src="../pkgs/d3.min.js"></script>
+<script src="dynplot.js"></script>
 <script>
-const MARGIN = {top:10, left:75, bottom:60, right:15};
-const WIDTH = 600 - MARGIN.left - MARGIN.right;
-const HEIGHT = 350 - MARGIN.top - MARGIN.bottom;
+var plot = new Dynplot('graph', 200, 2000);
+plot.xaxis('Widgets per year');
+plot.yaxis('Dollars per year');
 
 const MC = [[0, 1000], [100, 100], [200, 1750]];
 const AC = [[0, 2200], [150, 500], [200, 600]];
 var TC = [[0, 500], [40, 1000], [160, 1500], [200, 2100]];
 
-const LIM = [200, 2000];
-
-var xscale = d3.scale.linear().domain([0, LIM[0]]).range([0, WIDTH]);
-var yscale = d3.scale.linear().domain([0, LIM[1]]).range([HEIGHT, 0]);
-
-var line = d3.svg.line()
-    .x(function(d) {return xscale(d[0]);})
-    .y(function(d) {return yscale(d[1]);})
-    .interpolate('monotone');
-
-var svg = d3.select('#graph').append('svg')
-    .attr('width', WIDTH + MARGIN.left + MARGIN.right)
-    .attr('height', HEIGHT + MARGIN.top + MARGIN.bottom)
-
-var graph = svg.append('g')
-    .attr('transform', 'translate(' + MARGIN.left + ',' + MARGIN.top + ')');
-
-var xaxis = d3.svg.axis().scale(xscale).orient('bottom');
-graph.append('g')
-    .attr('class', 'x axis')
-    .attr('transform', 'translate(0,' + HEIGHT + ')')
-    .call(xaxis);
-
-var yaxis = d3.svg.axis().scale(yscale).ticks(4).orient('left');
-graph.append('g')
-    .attr('class', 'y axis')
-    .attr('transform', 'translate(0,0)')
-    .call(yaxis);
-
-svg.append('text')
-    .attr('class', 'y title')
-    .attr('alignment-baseline', 'text-before-edge')
-    .attr('text-anchor', 'middle')
-    .attr('transform', 'translate(0,'+(HEIGHT/2)+')rotate(-90)')
-    .text('Dollars per year');
-
-graph.append('text')
-    .attr('class', 'x title')
-    .attr('alignment-baseline', 'text-after-edge')
-    .attr('text-anchor', 'middle')
-    .attr('transform', 'translate('+(WIDTH/2)+',' + (HEIGHT+MARGIN.bottom-5) + ')')
-    .text('Widgets per year');
-
-var mc = graph.append('path').attr('class', 'MC line').attr('d', line(MC));
-var ac = graph.append('path').attr('class', 'AC line').attr('d', line(AC));
-
-dragListener = d3.behavior.drag()
-    .on('dragstart', function(d) {
-        d3.event.sourceEvent.stopPropagation();
-        d3.select(this).classed('dragging', true);
-    })
-    .on('drag', function(d, i) {
-        var x = d3.event.x, y = d3.event.y;
-        x = Math.min(Math.max(x, xscale(TC[i][0])), xscale(TC[i+2][0]));
-        d[0] = xscale.invert(x);
-        d[1] = yscale.invert(y);
-        d3.select(this).attr('cx', x).attr('cy', y);
-
-        var path = graph.selectAll('path.TC')
-            .data([TC])
-            .attr('d', function(d) {return line(d);});
-    })
-    .on('dragend', function(d) {
-        d3.select(this).classed('dragging', false);
-    });
-
-// overlay hack to make sure there is always something under the mouse
-graph.append('rect')
-    .attr('class', 'overlay')
-    .attr('width', WIDTH)
-    .attr('height', HEIGHT)
-    .attr('fill', 'none')
-graph
-    .attr('pointer-events', 'all')
-    .on('mouseover', function() {
-        graph.selectAll('circle.TC').
-            transition()
-            .delay(50)
-            .ease('linear')
-            .attr('r', 5);
-    })
-    .on('mouseout', function() {
-        graph.selectAll('circle.TC').
-            transition()
-            .delay(100)
-            .ease('linear')
-            .attr('r', 0);
-    });
-
-graph.selectAll('path.TC')
-    .data([TC])
-    .enter()
-    .append('path')
-    .attr('class', 'TC line')
-    .attr('d', function(d) {return line(d);});
-
-var controls = graph.selectAll('circle.TC')
-    .data(TC)
-    .enter()
-    .append('circle')
-    .filter(function(d) {return d[0] > 0 && d[0] < LIM[0];})
-    .attr('class', 'TC')
-    .attr('cx', function(d) {return xscale(d[0]);})
-    .attr('cy', function(d) {return yscale(d[1]);})
-    .attr('r', 0)
-    .call(dragListener);
-
-function getIntersection(c1, c2) {
-    // pretty fast code to find the intersection between two SVG paths
-    c1 = c1.node();
-    c2 = c2.node();
-    var p1 = c1.getPointAtLength(0), p2 = c2.getPointAtLength(0);
-    var oldp1 = p1, oldp2 = p2;
-    var i = 0, j = 0;
-    for(var x = 0; x < WIDTH; x += 10) {
-        while(p1.x < x)
-            p1 = c1.getPointAtLength(++i);
-        while(p2.x < x)
-            p2 = c2.getPointAtLength(++j);
-        if(Math.sign(p1.y-p2.y) != Math.sign(oldp1.y-oldp2.y))
-            return {x:(p1.x+p2.x+oldp1.x+oldp2.x)/4,
-                    y:(p1.y+p2.y+oldp1.y+oldp2.y)/4};
-        oldp1 = p1;
-        oldp2 = p2;
-    }
-    return null;
-}
-
-var pt = getIntersection(ac, mc);
-if(pt != null)
-    graph.append('circle')
-        .attr('class', 'intersection')
-        .attr('cx', pt.x)
-        .attr('cy', pt.y)
-        .attr('r', 6);
+var mc = plot.addLine('MC', MC, false);
+var ac = plot.addLine('AC', AC, false);
+plot.addIntersection(mc, ac);
+plot.addLine('TC', TC, true);
 </script>
 </body>
 </html>

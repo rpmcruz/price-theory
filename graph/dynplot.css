@@ -1,0 +1,12 @@
+.x.axis line, .x.axis path {stroke:black;}
+.y.axis line, .y.axis path {stroke:red;}
+.axis line, .axis path {shape-rendering:crispEdges; fill:none;}
+.y.axis text {fill:red;}
+text.y.title {fill:red;}
+path.line {stroke-width:2; fill:none;}
+path.AC, path.MC {stroke:black;}
+path.TC {stroke:red; fill:none;}
+/* adding invisible stroke border to make the point easier to drag */
+circle.control {fill:red; stroke-width:20; stroke:black; stroke-opacity:0; cursor:move;}
+circle.intersection {stroke:black; fill:white; stroke-width:2;}
+
