@@ -13,7 +13,7 @@ var Dynplot = function(container, xlim, ylim)
         .y(function(d) {return plot.yscale(d[1]);})
         .interpolate('monotone');
 
-    this.svg = d3.select('#graph').append('svg')
+    this.svg = d3.select(container).append('svg')
         .attr('width', WIDTH + MARGIN.left + MARGIN.right)
         .attr('height', HEIGHT + MARGIN.top + MARGIN.bottom)
     this.graph = this.svg.append('g')
