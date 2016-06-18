@@ -80,7 +80,7 @@ Dynplot.prototype.addLine = function(klass, data, interactive) {
     if(interactive) {
         var plot = this;
         var dragListener = d3.behavior.drag()
-            .on('dragstart', function(d) {
+            .on('dragstart', function() {
                 d3.event.sourceEvent.stopPropagation();
                 d3.select(this).classed('dragging', true);
             })
@@ -97,10 +97,10 @@ Dynplot.prototype.addLine = function(klass, data, interactive) {
                     .data([data])
                     .attr('d', function(d) {return plot.line(d);});
             })
-            .on('dragend', function(d) {
+            .on('dragend', function() {
                 d3.select(this).classed('dragging', false);
             });
-        var controls = this.graph.selectAll('circle.control')
+        var controls = this.graph.selectAll('circle.control.' + klass)
             .data(data)
             .enter()
             .append('circle')
