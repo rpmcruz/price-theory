@@ -12,18 +12,18 @@
 <script src="../pkgs/d3.min.js"></script>
 <script src="dynplot.js"></script>
 <script>
-var plot = new Dynplot('#graph', 200, 2000);
-plot.xaxis('Widgets per year');
-plot.yaxis('Dollars per year');
+var plot = new DynPlot('#graph', 200, 2000)
+    .xaxis('Widgets per year')
+    .yaxis('Dollars per year');
 
 const MC = [[0, 1000], [100, 100], [200, 1750]];
 const AC = [[0, 2200], [150, 500], [200, 600]];
 var TC = [[0, 500], [40, 1000], [160, 1500], [200, 2100]];
 
-var mc = plot.addLine('MC', MC, false);
-var ac = plot.addLine('AC', AC, false);
-plot.addIntersection(mc, ac);
-plot.addLine('TC', TC, true);
+new DynPointIntersection(
+    new DynLine(plot, 'MC', MC, true),
+    new DynLine(plot, 'AC', AC, true));
+new DynLine(plot, 'TC', TC, true);
 </script>
 </body>
 </html>
