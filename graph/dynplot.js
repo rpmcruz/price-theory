@@ -157,9 +157,7 @@ function DynPointIntersection(line1, line2) {
 
 DynPointIntersection.prototype.updated = function(line)
 {
-console.log('point intersection updated');
     var pts = getIntersection(this.line1.path.node(), this.line2.path.node());
-console.log('\t' + pts[0][0] + ',' + pts[0][1]);
     var c = this.plot.graph.selectAll('circle.intersection')
         .data(pts)
         .attr('cx', function(d) {return d[0];})
@@ -170,5 +168,47 @@ console.log('\t' + pts[0][0] + ',' + pts[0][1]);
         .attr('cx', function(d) {return d[0];})
         .attr('cy', function(d) {return d[1];})
         .attr('r', 6);
-//    c.exit().remove();
+    c.exit().remove();
+};
+
+//** DynLineDerivative
+
+function DynLineDerivative(line, klass, fn) {
+    this.line = line;
+    this.listeners = [];
+    var plot = line.plot;
+//console.log('derivative data: ' + line.path.node());
+
+    var svgpath = line.path.node();
+    var xs = [];
+    var ys = [];
+    for(var i = 0; i < svgpath.getTotalLength(); i++) {
+        var pt = svgpath.getPointAtLength(i);
+        xs.push(pt.x);
+        ys.push(pt.y);
+    }
+    var ys2 = [];
+    for(var i = 0; i < ys.length; i++) {
+        var y2 = fn(ys, i);
+        console.log('\t' + ys[i] + ' -> ' + y2);
+        ys2.push(y2);
+    }
+
+    var myline = d3.svg.line();
+
+
+    this.path = plot.graph
+        .append('path')
+        .attr('class', klass + ' line')
+        .attr('d', myline();
+        });
+}
+
+DynLineDerivative.prototype.updated = function(line)
+{
+    var data = line.path.data();
+    this.path.data(data)
+        .attr('d', function(d, i) {return fn(data, i);});
+    for(var i = 0; i < this.listeners.length; i++)
+        this.listeners[i].updated(this);
 };

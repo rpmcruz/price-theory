@@ -23,7 +23,10 @@ var TC = [[0, 500], [40, 1000], [160, 1500], [200, 2100]];
 new DynPointIntersection(
     new DynLine(plot, 'MC', MC, true),
     new DynLine(plot, 'AC', AC, true));
-new DynLine(plot, 'TC', TC, true);
+var tc = new DynLine(plot, 'TC', TC, true);
+
+//new DynLineDerivative(tc, 'MC2', function(path, i) {return path[i]-path[i-1];});
+new DynLineDerivative(tc, 'AC2', function(path, i) {return path[i]/i;});
 </script>
 </body>
 </html>
