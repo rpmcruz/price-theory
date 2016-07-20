@@ -9,15 +9,22 @@ svg circle.face {stroke:black; stroke-width:5px; fill:yellow;}
 svg circle.eye {fill:black;}
 svg path.smile {stroke:black; stroke-width:5px; fill:none;}
 </style>
+<script type="text/javascript" async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
 </head>
 
 <body>
 <div id="plot"></div>
 
-<p>Consumption: <input id="slider" type="range" value="0" min="-10" max="10" /></p>
+$$U(\textbf{g}) = \sum_{i=1}^3 (1-\exp(-\alpha_ig_i)) / 3$$
+
+<p>Bread: <input id="good1" class="good" type="range" value="0" min="-10" max="10" /></p>
+<p>Wine: <input id="good2" class="good" type="range" value="0" min="-10" max="10" /></p>
+<p>Circus: <input id="good3" class="good" type="range" value="0" min="-10" max="10" /></p>
 <p>Utility: <span id="utility">0</span></p>
 
 <script src="../pkgs/d3.min.js"></script>
+<script src="../pkgs/econ.utility.js"></script>
 <script>
 var width = 280, height = 280;
 
@@ -47,14 +54,22 @@ svg.append('path')
     .attr('transform', 'translate(0, 60)')
     .attr('d', lineFunction(smile));
 
-d3.select('#slider').on('input', function() {
-    smile[0].y = smile[2].y = -30*(this.value/10);
+const utility = new Utility([0.5, 0.5, 0.5]);
+
+d3.selectAll('.good').on('input', function(event) {
+    var value = utility.get([
+        d3.select('#good1').property('value'),
+        d3.select('#good2').property('value'),
+        d3.select('#good3').property('value')]);
+
+
+    smile[0].y = smile[2].y = -30*(value/10);
     svg.selectAll('.smile')
         .transition()
         .ease('linear')
         .duration(200)
         .attr('d', lineFunction(smile));
-    d3.select('#utility').text(this.value);
+    d3.select('#utility').text(value.toFixed(3));
 });
 </script>
 </body>
