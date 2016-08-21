@@ -1,3 +1,5 @@
+// (C) 2016 Ricardo Cruz
+
 function Utility(alphas)
 {
     this.as = alphas;

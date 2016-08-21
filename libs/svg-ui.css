@@ -1,0 +1,72 @@
+svg {
+    background-color: #fafafa;
+}
+
+text {
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+
+/* for svg rect, use class=svg-button and rx=ry=4 */
+svg g.btn > rect {
+    cursor: pointer;
+    fill: #fff;
+    stoke-width: 1px;
+    stroke: #ccc;
+}
+svg g.btn:hover > rect {
+    fill: #e6e6e6;
+    stroke: #adadad;
+}
+svg g.btn.pressed > rect {
+    fill: #d4d4d4;
+    stroke: #8c8c8c;
+}
+svg g.btn > text {
+    pointer-events: none;
+    fill: #333;
+    user-select: none;
+}
+svg g.btn > text::selection {
+    background: none;
+}
+
+svg g.btn.gold > rect {
+    fill: #f0ad4e;
+    stroke: #eea236;
+}
+svg g.btn.gold:hover > rect {
+    fill: #ec971f;
+    stroke: #d58512;
+}
+svg g.btn.gold.pressed > rect {
+    fill: #d58512;
+    stroke: #985f0d;
+}
+svg g.btn.gold > text {
+    fill: #fff;
+}
+
+svg g.btn.primary > rect {
+    fill: #286090;
+    stroke: #122b40;
+}
+svg g.btn.primary:hover > rect {
+    fill: #286090;
+    stroke: #204d74;
+}
+svg g.btn.primary.pressed > rect {
+    fill: #204d74;
+    stroke: #122b40;
+}
+svg g.btn.primary > text {
+    fill: #fff;
+}
+
+svg g.btn.disabled > rect {
+    cursor: not-allowed;
+    stroke: #ddd;
+}
+svg g.btn.disabled > text {
+    fill: gray;
+}

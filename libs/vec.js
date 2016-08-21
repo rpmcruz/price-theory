@@ -1,3 +1,4 @@
+// (C) 2016 Ricardo Cruz
 // Add vector functionality to Array
 
 Array.prototype.add = function(other) {
@@ -33,4 +34,8 @@ Array.prototype.normalize = function() {
         sum2 += Math.pow(this[i], 2);
     var norm2 = Math.sqrt(sum2);
     return this.mult(1/norm2);
+}
+
+Array.prototype.ortho = function() {
+    return new Array(this[1], -this[0]);
 }
