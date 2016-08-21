@@ -1,213 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Arbritrage</title>
-<style>
-body {width:600px; margin:0 auto;}
-g.node rect {fill:white; stroke:black; stroke-width:2; cursor:pointer;}
-g.selnode text.name {transform:translate(0px,-6px);}
-g.selnode text.q {transform:translate(0px,6px);}
-g.node.now rect {fill:lightblue;}
-g.node.past rect {fill:lightgray;}
-@keyframes flash {
-    0% {fill:rgb(230,230,230);}
-    100% {fill:rgb(180,180,180);}
-}
-g.node:not(.now) rect:hover {
-    fill:lightgray;
-    animation-name:flash;
-	animation-duration:1s;
-	animation-iteration-count:infinite;
-	animation-direction:alternate;
-	animation-timing-function:linear;
-}
-svg text {fill:black; text-anchor:middle; alignment-baseline:middle; pointer-events:none;}
-svg line {stroke:black; stroke-width:1;}
-g.price text {font-size:small;}
-</style>
+<link rel="stylesheet" type="text/css" href="../libs/svg-ui.css">
 </head>
 
 <body>
-<div id="plot"></div>
-
-<p>Number of nodes:
-<select onchange="set_nodes(this.value)">
-  <option value="3">3</option>
-  <option value="4" selected>4</option>
-  <option value="5">5</option>
-  <option value="6">6</option>
-</select>
-
+<h1>Arbritrage</h1>
+<p>This game illustrates how people can make money on arbritage. This is a barter economy (no money), but you could easily see how this would work in the currency market for instance (where too there is no measure of account and so can be seen as a barter economy) or even the stockmarket. In the long run, this bidding of prices up and down regulates prices.</p>
 <p id="description"></p>
 
-<p>This game illustrates how people can make money on arbritage. This is a barter economy (no money), but you could easily see how this would work in the currency market for instance (where too there is no measure of account and so can be seen as a barter economy) or even the stockmarket. In the long run, this bidding of prices up and down regulates prices.</p>
-</p>
+<svg width="500" height="400" />
+<form>Levels: <span id="levels"></span></form>
 
-<script src="../pkgs/d3.min.js" charset="utf-8"></script>
-<script src="../pkgs/vec.js"></script>
-<script src="logic.js"></script>
-<script src="database.js"></script>
-<script>
-var width = 600, height = 500;
-
-var svg = d3.select('#plot')
-    .append('svg')
-    .attr('width', width)
-    .attr('height', height)
-    .append('g')
-    .attr('transform', 'translate(' + (width/2) +  ',' + (height/2) + ')');
-
-//** Add nodes
-
-function nodePos(i, w, h) {
-    var angle = 2*Math.PI*i/logic.nodes;
-    angle += Math.PI;  // start from the left side
-    return [Math.cos(angle)*w, Math.sin(angle)*h];
-}
-
-function nodeSize(q) {
-    var r = 25 + 50*(0.2*q/100);
-    return [r*2, r];
-}
-
-function fadein(element) {
-    element
-        .style('opacity', 0)
-        .transition()
-        .duration(150)
-        .ease('linear')
-        .style('opacity', 1);
-}
-
-function fadeout(element_class) {
-    svg.selectAll('.' + element_class)
-        .data([])
-        .exit()
-        .classed(element_class, false)
-        .transition()
-        .duration(150)
-        .ease('linear')
-        .style('opacity', 0);
-}
-
-function set_nodes(nnodes) {
-    var commodity = commodities[Math.floor(Math.random()*commodities.length)];
-    logic = new Logic(nnodes);
-    current = 0;
-
-    fadeout('selnode');
-    fadeout('selprice');
-
-    /* I have used selnode and selprice class names for selection purposes,
-       so that we can eliminate them while still allow stylesheeting. */
-
-    var node = svg.selectAll('.selnode')
-        .data(logic.goods)
-        .enter()
-        .append('g')
-        .attr('class', 'selnode node')
-        .classed('now', function(d, i) {return i==0;})
-        .attr('transform', function(d, i) {
-            var p = nodePos(i, width/2-52, height/2-25);
-            return 'translate(' + p[0] +  ',' + p[1] + ')';
-        });
-    fadein(node);
-    node.on('click', function(d, i) {
-        if(current == i)
-            return;
-        var now = d3.select('.node.now');
-        var next = d3.select(this);
-        now.classed('now', false);
-        next.classed('now', true);
-        if(next.classed('past'))
-            next.classed('past', false);
-        else
-            now.classed('past', true);
-
-        var j = current;
-        var rate = logic.prices[j*logic.nodes+i].p/logic.prices[i*logic.nodes+j].p;
-        logic.goods[i].q = logic.goods[j].q * rate;
-        logic.goods[j].q = 0;
-        current = i;
-
-        svg.selectAll('g.selnode rect')
-            .data(logic.goods)
-            .transition()
-            .duration(50)
-            .ease('linear')
-            .each(function(d, i) {
-                var size = nodeSize(d.q);
-                d3.select(this).transition().attr({
-                    x: -size[0]/2, y: -size[1]/2, width: size[0], height: size[1]})
-            });
-        svg.selectAll('g.selnode text.q')
-            .data(logic.goods)
-            .text(function(d) {return d.q.toFixed();});
-    });
-    node.append('rect')
-        .each(function(d) {
-            var size = nodeSize(d.q);
-            d3.select(this).attr({
-                x: -size[0]/2, y: -size[1]/2, width: size[0], height: size[1]})
-        });
-    node.append('text')
-        .attr('class', 'q')
-        .text(function(d) { return d.q; });
-    node.append('text')
-        .attr('class', 'name')
-        .text(function(d, i) {return commodity.nodes[i];});
-
-    //** Add paths and prices
-
-    function priceDir(i, j) {
-        var I = nodePos(i, width/2-52, height/2-25);
-        var J = nodePos(j, width/2-52, height/2-25);
-        return I.sub(J).normalize();
-    }
-
-    function pricePos(i, j, offset) {
-        var I = nodePos(i, width/2-52*offset, height/2-25*offset);
-        return I.sub(priceDir(i, j).mult([70, 40]));
-    }
-
-    var price = svg.selectAll('.selprice')
-        .data(logic.prices.filter(function(d) {return d.i != d.j;}))
-        .enter()
-        .append('g')
-        .attr('class', 'selprice price');
-    fadein(price);
-    price.append('line')
-        .attr('x1', function(d, i) {return pricePos(d.i, d.j, 2)[0];})
-        .attr('y1', function(d) {return pricePos(d.i, d.j, 2)[1];})
-        .attr('x2', function(d) {return pricePos(d.j, d.i, 2)[0];})
-        .attr('y2', function(d) {return pricePos(d.j, d.i, 2)[1];});
-    price.append('path')
-        .attr('transform', function(d) {
-            var u = priceDir(d.i, d.j);
-            var p = pricePos(d.i, d.j, 2);
-            var angle = Math.atan2(u[1], u[0]) * 180/Math.PI;
-            return 'translate(' + p[0] + ',' + p[1] + '), rotate(' + angle + '), scale(' + 15*(0.2+0.8*d.p/10) + ')';
-        })
-        .attr('d', 'M0,-1 L2,0 L0,1');
-    price.append('text')
-        .attr('x', function(d) {return pricePos(d.i, d.j, 1)[0];})
-        .attr('y', function(d) {return pricePos(d.i, d.j, 1)[1];})
-        .text(function(d) {
-            var unit1 = commodity.units[d.i];
-            var unit2 = commodity.units[d.j];
-            var p1 = logic.prices[d.j*logic.nodes+d.i].p;
-            var p2 = d.p;
-            if(commodity.unitssign == 'left')
-                return unit1 + ' ' + p1 + ' = ' + unit2 + ' ' + p2;
-            // else - right
-            return p1 + ' ' + unit1 + ' = ' + p2 + ' ' + unit2;
-        });
-
-    d3.select('#description').html(commodity.description);
-}
-
-var logic, current;
-set_nodes(4);
-</script>
+<script src="../libs/d3.v4.min.js"></script>
+<script src="../libs/svg-ui.js"></script>
+<script src="../libs/vec.js"></script>
+<script src="goods.js"></script>
+<script src="prices.js"></script>
+<script src="test.js"></script>
 </body>
 </html>
