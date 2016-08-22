@@ -1,0 +1,8 @@
+#plot {display:inline-block; font-size:14px;}
+.axis path, .axis line {fill:none; stroke:#000; shape-rendering:crispEdges;}
+svg .line {cursor:pointer;}
+table {display:inline-block;}
+tr {margin-bottom: 10px; transition:background-color 200ms;}
+tr.hl {background-color: rgb(220,220,220);}
+td {border-style:solid; border-width: 1px;}
+td.point {font-weight: bold;}
