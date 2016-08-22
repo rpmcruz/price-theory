@@ -10,15 +10,17 @@ var L3 = ['$1.00', '$2.00', '$3.00', '$4.00'];
 var betaA = [0, 2, 0, 1];
 var betaB = [100, 0, -2, -1];
 
-function P(X) {
-    var XA = X.mult(betaA);
-    var XB = X.mult(betaB);
-    return (XB[0]-XA[0]) / (XA[1]+XA[2]+XA[3]-(XB[1]+XB[2]+XB[3]));
+function P(X) {  // P is obtained by solving Qs(P)=Qd(P)
+    const XA = X.mult(betaA);
+    const XB = X.mult(betaB);
+    const div = XA[1]+XA[2]+XA[3]-(XB[1]+XB[2]+XB[3]);
+    if(div)
+        return (XB[0]-XA[0]) / div;
+    return 100;
 }
 
-function Q(X) {
-    var XA = X.mult(betaA);
-    var XB = X.mult(betaB);
+function Q(X) {  // Q on equilibrium
+    const XA = X.mult(betaA);
     return XA[0] + (XA[1]+XA[2]+XA[3])*P(X);
 }
 
@@ -42,13 +44,31 @@ function getRectIntersection(xA, yA, xB, yB) {
     return [[x0, y0], [x1, y1]];
 }
 
-var idx = d3.shuffle(d3.range(Math.pow(4, 3))).slice(0, 6);
-var Xs = idx.map(function(i) {
+var idx = d3.shuffle(d3.range(Math.pow(4, 3)));
+var _Xs = idx.map(function(i) {
     return [1, (i%4), (Math.floor(i/4)%4), Math.floor(i/16)];
 });
 
+// select a few that are actually different
+// HACK: this seemed smart at first, but not so smart (and is ugly)
+var Xs = [];
+var i = 0;
+while(Xs.length < 6) {
+    var j;
+    for(j = 0; j < i; j++)
+        if(Q(_Xs[j]) == Q(_Xs[i]))
+            break;
+    if(j == i)
+        Xs.push(_Xs[i]);
+    i += 1;
+}
+
+// intercept must always be 1
 var Qmax = Q([1,3,0,0]);
-var Pmax = P([1,3,0,0]);
+var Pmax = 30;  // HACK (do the math!)
+
+const correct = Math.floor(Math.random()*(Xs.length-1))+1;
+var done = false;
 
 // CREATE TABLE
 
@@ -60,8 +80,7 @@ tr.append('th').html('Weather');
 tr.append('th').html('Fashion');
 tr.append('th').html('Meat Price');
 
-function addPoints(Xs) {
-    console.log('add points: ' + Xs);
+function addPoints(Xs, Xpt) {
     // table
     var tr = table.selectAll('tr.value')
         .data(Xs)
@@ -125,13 +144,17 @@ function addPoints(Xs) {
             return i == 0 ? 'P' : String.fromCharCode(64+i);
         });
 
+    if(!Xpt)
+        return;
     // lines between P and all other points
     var lines = background.selectAll('.line')
-        .data(Xs.slice(1))
+        .data(Xs)
         .enter()
         .append('g')
         .attr('class', 'line')
         .on('mouseover', function() {
+            if(done)
+                return;
             d3.select(this.childNodes[1])
                 .transition()
                 .duration(200)
@@ -140,6 +163,8 @@ function addPoints(Xs) {
                 .attr('stroke-width', 2);
         })
         .on('mouseout', function(d, i) {
+            if(done)
+                return;
             d3.select(this.childNodes[1])
                 .transition()
                 .duration(200)
@@ -148,14 +173,22 @@ function addPoints(Xs) {
                 .attr('stroke-width', 1);
         })
         .on('click', function(d, i) {
-            console.log('clicked: ' + i + ' ' + d);
+            if(done)
+                return;
+            if(i == correct) {
+                d3.select(this.childNodes[1]).attr('stroke', 'green')
+                    .transition().attr('stroke-width', 4);
+                done = true;
+            }
+            else
+                d3.select(this.childNodes[1]).attr('stroke', 'red');
         });
     lines.append('line')
         .attr('stroke', 'black')
         .attr('stroke-width', 18)
         .attr('stroke-opacity', 0)
         .each(function(B) {
-            var A = Xs[0];
+            var A = Xpt;
             var pts = getRectIntersection(Q(A), P(A), Q(B), P(B));
             d3.select(this)
                 .attr('x1', x(pts[0][0]))
@@ -168,7 +201,7 @@ function addPoints(Xs) {
         .attr('stroke', 'rgb(200,200,200)')
         .attr('stroke-width', 1)
         .each(function(B) {
-            var A = Xs[0];
+            var A = Xpt;
             var pts = getRectIntersection(Q(A), P(A), Q(B), P(B));
             d3.select(this)
                 .attr('x1', x(pts[0][0]))
@@ -218,13 +251,15 @@ svg.append('text')
 // WRITE TEXT
 
 addPoints(Xs.slice(0, 1));
+const guessSupply = Math.sign(P(Xs[correct])-P(Xs[0])) == Math.sign(Q(Xs[correct])-Q(Xs[0]));
+const objective = guessSupply ? 'supply' : 'demand';
 
 d3.select('#text')
     .html('Point <b>P</b> represents current price and quantity of wool. ')
     .append('button')
         .text('See historical points')
         .on('click', function() {
-            addPoints(Xs);
+            addPoints(Xs.slice(1), Xs[0]);
             d3.select('#text')
-                .html('Choose whichever point is in the same <u>demand</u> line as <b>P</b>.');
+                .html('Choose whichever point is in the same <u>' + objective + '</u> line as <b>P</b>.');
         });
