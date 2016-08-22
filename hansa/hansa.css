@@ -1,0 +1,41 @@
+.wrap {width:700px; margin:0 auto;}
+svg {background:url("map.svg"); margin-bottom: 20px;}
+p.text {line-height: 150%;}
+
+svg circle.city {stroke-width:4; stroke:black; fill:white; cursor:pointer;}
+svg circle.city.locked {stroke:gray; cursor:default;}
+svg circle.city.player0 {fill:blue;}
+svg circle.city.player1 {fill:green;}
+svg circle.city.player2 {fill:saddlebrown;}
+svg circle.city.selected0 {stroke:blue;}
+svg circle.city.selected1 {stroke:green;}
+
+.colcity {display:inline-block; width:180px; vertical-align:top;}
+.coltrade {display:inline-block; width:330px; vertical-align:top;}
+.centertrade {display:block; margin:0 auto; width:250px;}
+
+/* city and trade fields */
+
+p.citylabel {margin:0 0 4px 0; font-weight:bold;}
+
+/* city fields */
+
+.label {padding-right:4px;}
+.value {border-style:solid; border-width:2px; border-color:black; text-align:center; width:100%; font-weight:bold;}
+.maxvalue {color:gray; font-weight:normal; font-size:small;}
+.showutility {border-style:solid; border-width:2px; border-color:black; background-color:black; color:white; text-align:center; width:100%; font-weight:bold;}
+table {border-collapse:collapse; width:100%;}
+table td {padding: 0;}
+
+/* trade fields */
+
+input {width:65%; height:2ex;}
+button {height:3ex; vertical-align:middle; font-size:small;}
+.linput0 {display:inline-block; width:15%; text-align:left;}
+.linput1 {display:inline-block; width:15%; text-align:right;}
+.proposebox {text-align:right;}
+p.proposedesc {display:inline-block; font-size:small; margin:0 0 0 0; vertical-align:middle; height:100%; line-height:90%; color:#424242; width:8em;}
+
+/* other fields */
+
+#turn {font-size:small; margin:20px 0 60px 0;}
