@@ -7,13 +7,13 @@ const HEIGHT = 350 - MARGIN.top - MARGIN.bottom;
 function DynPlot(container, xlim, ylim)
 {
     var plot = this;
-    this.xscale = d3.scale.linear().domain([0, xlim]).range([0, WIDTH]);
-    this.yscale = d3.scale.linear().domain([0, ylim]).range([HEIGHT, 0]);
+    this.xscale = d3.scaleLinear().domain([0, xlim]).range([0, WIDTH]);
+    this.yscale = d3.scaleLinear().domain([0, ylim]).range([HEIGHT, 0]);
 
-    this.line = d3.svg.line()
+    this.line = d3.line()
         .x(function(d) {return plot.xscale(d[0]);})
         .y(function(d) {return plot.yscale(d[1]);})
-        .interpolate('monotone');
+        .curve(d3.curveMonotoneX);
 
     this.svg = d3.select(container).append('svg')
         .attr('width', WIDTH + MARGIN.left + MARGIN.right)
@@ -31,21 +31,20 @@ function DynPlot(container, xlim, ylim)
         .attr('pointer-events', 'all')
         .on('mouseover', function() {
             plot.graph.selectAll('circle.control').transition().delay(50)
-                .ease('linear').attr('r', 5);
+                .ease(d3.easeLinear).attr('r', 5);
         })
         .on('mouseout', function() {
             plot.graph.selectAll('circle.control').transition().delay(100)
-                .ease('linear').attr('r', 0);
+                .ease(d3.easeLinear).attr('r', 0);
         });
 }
 
 DynPlot.prototype.xaxis = function(title)
 {
-    var xaxis = d3.svg.axis().scale(this.xscale).orient('bottom');
     this.graph.append('g')
         .attr('class', 'x axis')
         .attr('transform', 'translate(0,' + HEIGHT + ')')
-        .call(xaxis);
+        .call(d3.axisBottom(this.xscale));
     if(title)
         this.graph.append('text')
             .attr('class', 'x title')
@@ -59,11 +58,10 @@ DynPlot.prototype.xaxis = function(title)
 
 DynPlot.prototype.yaxis = function(title)
 {
-    var yaxis = d3.svg.axis().scale(this.yscale).ticks(4).orient('left');
     this.graph.append('g')
         .attr('class', 'y axis')
         .attr('transform', 'translate(0,0)')
-        .call(yaxis);
+        .call(d3.axisLeft(this.yscale));
     if(title)
         this.svg.append('text')
             .attr('class', 'y title')
@@ -86,8 +84,8 @@ function DynLine(plot, klass, data, interactive) {
         .attr('d', function(d) {return plot.line(d);});
 
     if(interactive) {
-        var dragListener = d3.behavior.drag()
-            .on('dragstart', function() {
+        var drag = d3.drag()
+            .on('start', function() {
                 d3.event.sourceEvent.stopPropagation();
                 d3.select(this).classed('dragging', true);
             })
@@ -107,7 +105,7 @@ function DynLine(plot, klass, data, interactive) {
                 for(var i = 0; i < line.listeners.length; i++)
                     line.listeners[i].updated(line);
             })
-            .on('dragend', function() {
+            .on('end', function() {
                 d3.select(this).classed('dragging', false);
             });
         plot.graph.selectAll('circle.control.' + klass)
@@ -121,7 +119,7 @@ function DynLine(plot, klass, data, interactive) {
             .attr('class', klass + ' control')
             .attr('cx', function(d) {return plot.xscale(d[0]);})
             .attr('cy', function(d) {return plot.yscale(d[1]);})
-            .call(dragListener);
+            .call(drag);
     }
 }
 
@@ -194,14 +192,11 @@ function DynLineDerivative(line, klass, fn) {
         ys2.push(y2);
     }
 
-    var myline = d3.svg.line();
-
-
+    var myline = d3.line();
     this.path = plot.graph
         .append('path')
         .attr('class', klass + ' line')
-        .attr('d', myline();
-        });
+        .attr('d', myline());
 }
 
 DynLineDerivative.prototype.updated = function(line)

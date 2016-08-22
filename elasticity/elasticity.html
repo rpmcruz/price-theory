@@ -20,8 +20,8 @@ td.point {font-weight: bold;}
 
 <p id="text">Error: make sure you have Javascript enabled and your browser is updated.</p>
 
-<script src="../pkgs/d3.min.js"></script>
-<script src="../pkgs/vec.js"></script>
+<script src="../libs/d3.v4.min.js"></script>
+<script src="../libs/vec.js"></script>
 <script>
 var labels = ['Weather', 'Fashion', 'Meat Price'];
 var L1 = ['Terrible', 'Bad', 'Good', 'Great'];
@@ -95,7 +95,7 @@ function addPoints(Xs) {
         .attr('class', 'value')
         .on('mouseover', function(d, i) {
             this.className = 'hl';
-            var g = svg.selectAll('.point')[0][i];
+            var g = svg.selectAll('.point').nodes()[i];
             var t = g.childNodes[0];
             d3.select(t).transition().duration(200).attr('r', 6);
             t = g.childNodes[1];
@@ -103,7 +103,7 @@ function addPoints(Xs) {
         })
         .on('mouseout', function(d, i) {
             this.className = '';
-            var g = svg.selectAll('.point')[0][i];
+            var g = svg.selectAll('.point').nodes()[i];
             var t = g.childNodes[0];
             d3.select(t).transition().duration(200).attr('r', 4);
             t = g.childNodes[1];
@@ -114,7 +114,7 @@ function addPoints(Xs) {
         .style('border-color', 'white')
         .transition()
         .duration(250)
-        .ease('linear')
+        .ease(d3.easeLinear)
         .style('border-color', 'black')
         .style('color', 'black');
     tr.append('td')
@@ -136,7 +136,7 @@ function addPoints(Xs) {
         .style('fill-opacity', 1e-6)
         .transition()
         .duration(250)
-        .ease('linear')
+        .ease(d3.easeLinear)
         .style('fill-opacity', 1);
     points.append('circle')
         .attr('fill', 'black')
@@ -160,7 +160,7 @@ function addPoints(Xs) {
             d3.select(this.childNodes[1])
                 .transition()
                 .duration(200)
-                .ease('linear')
+                .ease(d3.easeLinear)
                 .attr('stroke', 'rgb(160,160,160)')
                 .attr('stroke-width', 2);
         })
@@ -168,7 +168,7 @@ function addPoints(Xs) {
             d3.select(this.childNodes[1])
                 .transition()
                 .duration(200)
-                .ease('linear')
+                .ease(d3.easeLinear)
                 .attr('stroke', 'rgb(200,200,200)')
                 .attr('stroke-width', 1);
         })
@@ -210,11 +210,8 @@ var margin = {top: 20, right: 20, bottom: 30, left: 40},
     innerwidth = width - margin.left - margin.right,
     innerheight = height - margin.top - margin.bottom;
 
-var x = d3.scale.linear().domain([0, Qmax]).range([0, innerwidth]);
-var y = d3.scale.linear().domain([0, Pmax]).range([innerheight, 0]);
-
-var xaxis = d3.svg.axis().scale(x).orient('bottom').ticks(4);
-var yaxis = d3.svg.axis().scale(y).orient('left').ticks(4);
+var x = d3.scaleLinear().domain([0, Qmax]).range([0, innerwidth]);
+var y = d3.scaleLinear().domain([0, Pmax]).range([innerheight, 0]);
 
 var svg = d3.select('#plot').append('svg')
     .attr('width', width)
@@ -227,16 +224,16 @@ var background = svg.append('g');
 svg.append('g')
     .attr('class', 'axis')
     .attr('transform', 'translate(0,' + innerheight + ')')
-    .call(xaxis)
-    .append('text')
+    .call(d3.axisBottom(x));
+svg.append('text')
         .attr('x', innerwidth)
-        .attr('y', -6)
+        .attr('y', innerheight-6)
         .style('text-anchor', 'end')
         .text('Quantity of Wool sold per year');
 svg.append('g')
     .attr('class', 'axis')
-    .call(yaxis)
-    .append('text')
+    .call(d3.axisLeft(y));
+svg.append('text')
         .attr('transform', 'rotate(-90)')
         .attr('y', 6)
         .attr('dy', '.71em')
