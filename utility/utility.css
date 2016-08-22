@@ -8,13 +8,18 @@ svg circle.face {
     stroke-width: 3px;
     fill: yellow;
 }
+svg circle.face-shadow {
+    fill: black;
+    opacity: 0.30;
+    transform: translate(4px, 4px);
+}
 svg circle.eye {
-    fill:black;
+    fill: black;
 }
 svg path.smile {
-    stroke:black;
+    stroke: black;
     stroke-width: 3px;
-    fill:none;
+    fill: none;
 }
 
 table {

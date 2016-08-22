@@ -1,6 +1,6 @@
 katex.render('U(x) = \\sum_{i=1}^2 (1-\\exp(-\\alpha_ix_i)) / 2', d3.select('#eq').node());
 
-var graph = new DynGraph(d3.select('svg'), [0, 100], [0, 100])
+var graph = new DynGraph(d3.select('svg'), [0, 100], [0, 100], {top: 40, bottom: 40, left: 40, right: 40})
     .xaxis('Bread')
     .yaxis('Wine');
 new DynPlot(graph, [[0, 100], [100, 0]]);
@@ -9,6 +9,7 @@ function Smile(graph) {
     this.g = graph.graph.append('g')
         .attr('transform', 'translate(' + graph.xscale(0) + ',' + graph.yscale(0) + ')');
 
+    this.g.append('circle').attr('class', 'face-shadow').attr('r', 25);
     this.g.append('circle').attr('class', 'face').attr('r', 25);
     this.g.append('circle').attr('class', 'eye').attr('r', 4).attr('cx', -10).attr('cy', -10);
     this.g.append('circle').attr('class', 'eye').attr('r', 4).attr('cx', +10).attr('cy', -10);

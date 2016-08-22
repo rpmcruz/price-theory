@@ -1,10 +1,11 @@
-//** DynPlot
+// (C) 2016 Ricardo Cruz
 
-const MARGIN = {top:10, left:40, bottom:40, right:15};
-
-function DynGraph(container, xlim, ylim) {
-    this.width = container.attr('width') - MARGIN.left - MARGIN.right;
-    this.height = container.attr('height') - MARGIN.top - MARGIN.bottom;
+function DynGraph(container, xlim, ylim, margins) {
+    const MARGINS = {top:10, left:40, bottom:40, right:15};
+    if(!margins)
+        margins = MARGINS;
+    this.width = container.attr('width') - margins.left - margins.right;
+    this.height = container.attr('height') - margins.top - margins.bottom;
 
     this.xscale = d3.scaleLinear().domain(xlim).range([0, this.width]);
     this.yscale = d3.scaleLinear().domain(ylim).range([this.height, 0]);
@@ -12,7 +13,7 @@ function DynGraph(container, xlim, ylim) {
     this.container = container;
     this.graph = container
         .append('g')
-        .attr('transform', 'translate(' + MARGIN.left + ',' + MARGIN.top + ')');
+        .attr('transform', 'translate(' + margins.left + ',' + margins.top + ')');
 }
 DynGraph.prototype.xaxis = function(title) {
     this.graph
@@ -23,10 +24,9 @@ DynGraph.prototype.xaxis = function(title) {
     if(title)
         this.graph.append('text')
             .attr('class', 'x title')
-            .attr('alignment-baseline', 'text-after-edge')
+            .attr('alignment-baseline', 'text-before-edge')
             .attr('text-anchor', 'middle')
-            .attr('transform', 'translate(' + (this.width/2) + ',' +
-                (this.height+MARGIN.bottom-5) + ')')
+            .attr('transform', 'translate(' + (this.width/2) + ',' + (this.height+22) + ')')
             .text(title);
     return this;
 };
@@ -36,11 +36,11 @@ DynGraph.prototype.yaxis = function(title) {
         .attr('transform', 'translate(0,0)')
         .call(d3.axisLeft(this.yscale));
     if(title)
-        this.container.append('text')
+        this.graph.append('text')
             .attr('class', 'y title')
-            .attr('alignment-baseline', 'text-before-edge')
+            .attr('alignment-baseline', 'text-after-edge')
             .attr('text-anchor', 'middle')
-            .attr('transform', 'translate(0,' + (this.height/2) + ') rotate(-90)')
+            .attr('transform', 'translate(-20,' + (this.height/2) + ') rotate(-90)')
             .text(title);
     return this;
 };
