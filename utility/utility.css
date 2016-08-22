@@ -1,11 +1,11 @@
 #container {
-    width:280px;
-    margin:0 auto;
+    width: 400px;
+    margin: 0 auto;
 }
 
 svg circle.face {
     stroke: black;
-    stroke-width: 5px;
+    stroke-width: 3px;
     fill: yellow;
 }
 svg circle.eye {
@@ -13,7 +13,7 @@ svg circle.eye {
 }
 svg path.smile {
     stroke:black;
-    stroke-width:5px;
+    stroke-width: 3px;
     fill:none;
 }
 

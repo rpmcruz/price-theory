@@ -2,16 +2,17 @@
 <html>
 <head>
 <title>Utility game</title>
-<link rel="stylesheet" href="utility.css">
+<link rel="stylesheet" href="../libs/katex/katex.min.css">
 <link rel="stylesheet" href="../libs/svg-ui.css">
 <link rel="stylesheet" href="../libs/svg-dyngraph.css">
-<link rel="stylesheet" href="../libs/katex/katex.min.css">
+<link rel="stylesheet" href="utility.css">
 </head>
 
 <body>
 
 <div id="container">
-<svg width="280" height="280"></svg>
+<svg width="400" height="400"></svg>
+
 <table>
 <tr><td>Money:</td><td id="money">$100</td></tr>
 <tr><td>Utility:</td><td id="utility">0</td></tr>
@@ -23,16 +24,11 @@
 <div id="eq"></div>
 
 <p>You are unaware of the values of alpha. But notice how wine gives a big utility boost, but it quickly reaches diminishing returns. To reach utility=1, you must balance your consumption.</p>
-
-<p>Plot of your budget:</p>
-
-<svg id="plot" width="200" height="200"></svg>
 </div>
 
 <script src="../libs/katex/katex.min.js"></script>
 <script src="../libs/d3.v4.min.js"></script>
 <script src="../libs/econ.utility.js"></script>
-<script src="../libs/svg-ui.js"></script>
 <script src="../libs/svg-dyngraph.js"></script>
 <script src="../libs/vec.js"></script>
 <script src="utility.js"></script>

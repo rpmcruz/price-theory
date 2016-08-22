@@ -1,30 +1,32 @@
 katex.render('U(x) = \\sum_{i=1}^2 (1-\\exp(-\\alpha_ix_i)) / 2', d3.select('#eq').node());
 
-var graph = new DynGraph(d3.select('#plot'), [0, 100], [0, 100])
+var graph = new DynGraph(d3.select('svg'), [0, 100], [0, 100])
     .xaxis('Bread')
     .yaxis('Wine');
 new DynPlot(graph, [[0, 100], [100, 0]]);
-var point = new DynScatter(graph, [0, 0]);
 
-function Smile(parent, diameter) {
-    parent.append('circle').attr('class', 'face').attr('r', width/2-5);
-    parent.append('circle').attr('class', 'eye').attr('r', 20).attr('cx', -50).attr('cy', -50);
-    parent.append('circle').attr('class', 'eye').attr('r', 20).attr('cx', +50).attr('cy', -50);
+function Smile(graph) {
+    this.g = graph.graph.append('g')
+        .attr('transform', 'translate(' + graph.xscale(0) + ',' + graph.yscale(0) + ')');
+
+    this.g.append('circle').attr('class', 'face').attr('r', 25);
+    this.g.append('circle').attr('class', 'eye').attr('r', 4).attr('cx', -10).attr('cy', -10);
+    this.g.append('circle').attr('class', 'eye').attr('r', 4).attr('cx', +10).attr('cy', -10);
 
     this.lineFunction = d3.line()
         .curve(d3.curveMonotoneX)
         .x(function(d) {return d.x;})
         .y(function(d) {return d.y;});
-    var pts = [{x: -85, y: 30}, {x: 0, y: 0}, {x: +85, y: 30}];
-    this.smile = parent.append('path')
+    var pts = [{x: -14, y: 10}, {x: 0, y: 0}, {x: +14, y: 10}];
+    this.smile = this.g.append('path')
         .attr('class', 'smile')
-        .attr('transform', 'translate(0, 60)')
+        .attr('transform', 'translate(0, 7)')
         .attr('d', this.lineFunction(pts));
+    this.graph = graph;
 }
 Smile.prototype.value = function(value) {
-    var height = 30;
-    var y = -height * (value*2-1);
-    var pts = [{x: -85, y: y}, {x: 0, y: 0}, {x: +85, y: y}];
+    var y = -10 * (value*2-1);
+    var pts = [{x: -14, y: y}, {x: 0, y: 0}, {x: +14, y: y}];
     this.smile
         .transition()
         .ease(d3.easeLinear)
@@ -32,12 +34,15 @@ Smile.prototype.value = function(value) {
         .attr('d', this.lineFunction(pts));
     return this;
 };
+Smile.prototype.pos = function(pos) {
+    var x = this.graph.xscale(pos[0]);
+    var y = this.graph.yscale(pos[1]);
+    this.g
+        .transition()
+        .attr('transform', 'translate(' + x + ',' + y + ')');
+}
 
-var svg = d3.select('svg');
-var back = appendBack(svg);
-
-var width = Math.min(svg.attr('width'), svg.attr('height'));
-var smile = new Smile(back, width);
+var smile = new Smile(graph);
 
 const alphas = [0.01, 0.05];
 const utility = new Utility(alphas);
@@ -70,5 +75,5 @@ d3.selectAll('.good').on('input', function() {
     smile.value(utils);
     d3.select('#good1-value').text(goods[0]);
     d3.select('#good2-value').text(goods[1]);
-    point.reset(goods);
+    smile.pos(goods);
 });
