@@ -16,10 +16,10 @@ function City(id, name, x, y) {
     this.y = 275-y;
     // economic variables
     // population (pop) -- total laborers
-    this.pop = Math.round(d3.random.normal(1000, 200)());
+    this.pop = Math.round(d3.randomNormal(1000, 200)());
     // productivity (z) -- products-per-laborer
     this.z = new Array(commodities);
-    var rnorm = d3.random.normal(1, 0.1);
+    var rnorm = d3.randomNormal(1, 0.1);
     for(var c = 0; c < commodities; c++) {
         var r = rnorm();
         this.z[c] = Math.max(0.1, r);

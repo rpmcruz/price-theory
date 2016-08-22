@@ -114,14 +114,17 @@ p.proposedesc {display:inline-block; font-size:small; margin:0 0 0 0; vertical-a
 <p class="text">The idea behind this game is in presenting the concept of comparative advantage. The concept was first introduced by David Ricardo, the son of Portuguese jewish refugees in Britain at a time when people were afraid free trade would mean Portugal would completely dominate England in trade. David Ricardo showed, together with a numerical example, how both Portugal and England could benefit from trade.</p>
 </div>
 
-<script src="../pkgs/d3.min.js" charset="utf-8"></script>
+<script src="../libs/d3.v4.min.js"></script>
 <script src="city.js"></script>
-<script src="view.js"></script>
 <script src="ai.js"></script>
 <script>
 //////////////////////////////// Initialization
 
-var cities = [
+const playersColors = [
+    'black', 'blue', 'green', 'brown'
+];
+
+const cities = [
     new City(0, 'London', 357, 264),
     new City(1, 'Hamburg', 468, 199),
     new City(2, 'Lisbon', 36, 139),
@@ -154,7 +157,7 @@ d3.select('svg')
         d3.select(this)
             .transition()
             .duration(50)
-            .ease('linear')
+            .ease(d3.easeLinear)
             .attr('r', 10);
     })
     .on('click', function(city) {
