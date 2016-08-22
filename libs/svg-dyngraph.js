@@ -53,7 +53,7 @@ function DynPlot(graph, pts) {
     this.path = graph.graph
         .append('path')
         .data([pts])
-        .attr('class', 'line')
+        .attr('class', 'plot')
         .attr('d', line);
 }
 
@@ -62,7 +62,7 @@ function DynScatter(graph, pts) {
     this.pts = graph.graph
         .append('circle')
         .data([pts])
-        .attr('class', 'point')
+        .attr('class', 'scatter')
         .attr('r', 5)
         .attr('cx', function(d) { return graph.xscale(d[0]); })
         .attr('cy', function(d) { return graph.yscale(d[1]); });

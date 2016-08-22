@@ -22,6 +22,10 @@ svg path.smile {
     fill: none;
 }
 
+svg path.plot {
+    stroke: red;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
