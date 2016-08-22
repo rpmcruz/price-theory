@@ -9,7 +9,7 @@ svg .ticks text {
 
 svg path.plot {
     fill: none;
-    stroke: black;
+    stroke: blue;
 }
 
 svg circle.scatter {
