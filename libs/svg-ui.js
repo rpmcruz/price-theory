@@ -2,18 +2,15 @@
 
 /* Background organizing things using the center as the focal point */
 
-function Background() {
-    var svg = d3.select('svg');
-    var back = svg
+function appendBack(svg) {
+    return svg
         .append('g')
         .attr('transform', 'translate(' + (svg.attr('width')/2) + ',' + (svg.attr('height')/2) + ')');
-    this.widget = back;
 }
 
 /* A simple SVG button based on Bootstrap's look */
 
-function SvgButton(parent, size)
-{
+function SvgButton(parent, size) {
     var btn = parent
         .append('g')
         .attr('class', 'btn');

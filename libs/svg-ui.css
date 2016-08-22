@@ -1,8 +1,11 @@
+p {
+    text-align: justify;
+}
+
 svg {
     background-color: #fafafa;
 }
-
-text {
+svg text {
     text-anchor: middle;
     dominant-baseline: central;
 }

@@ -1,0 +1,33 @@
+#container {
+    width:280px;
+    margin:0 auto;
+}
+
+svg circle.face {
+    stroke: black;
+    stroke-width: 5px;
+    fill: yellow;
+}
+svg circle.eye {
+    fill:black;
+}
+svg path.smile {
+    stroke:black;
+    stroke-width:5px;
+    fill:none;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+table tr:nth-child(1), table tr:nth-child(2) {
+    background-color: #eeeeee;
+}
+table tr td {
+    border: 1px solid #dddddd;
+    padding: 8px;
+}
+#good1-value, #good2-value {
+    width: 2em;
+}

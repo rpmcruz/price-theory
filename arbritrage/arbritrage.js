@@ -16,12 +16,12 @@ levels
     .text(function(d) {return d;});
 d3.select('#radio4').attr('checked', true);
 
-var back = new Background();
+var back = appendBack(d3.select('svg'));
 var goods, prices, nodes, Q, active;
 
 function reset(ngoods) {
     goods = ngoods;
-    back.widget.selectAll('*').remove();
+    back.selectAll('*').remove();
 
     // draw arcs
 
@@ -49,7 +49,7 @@ function reset(ngoods) {
                 var path = d3.path();
                 path.moveTo(pos1[0], pos1[1]);
                 path.quadraticCurveTo(control[0], control[1], pos2[0], pos2[1]);
-                back.widget
+                back
                     .append('path')
                     .style('stroke', 'gray')
                     .style('fill', 'none')
@@ -58,7 +58,7 @@ function reset(ngoods) {
             // text
             var p = pos1.add(unit.mult([-50-25, -30-25]));
             //p = p.add(ortho.mult(10));
-            back.widget
+            back
                 .append('text')
                 .style('fill', 'black')
                 .style('font-size', '80%')
@@ -73,7 +73,7 @@ function reset(ngoods) {
     for(var i = 0; i < goods; i++) {
         var pos = nodePos(i);
 
-        var btn = new SvgButton(back.widget, [100, 40])
+        var btn = new SvgButton(back, [100, 40])
             .pos(pos[0], pos[1])
             .text(database[0].goods[i].text);
         if(i == 0)
