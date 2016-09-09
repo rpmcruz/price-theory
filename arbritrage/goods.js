@@ -1,6 +1,23 @@
 var database = [
 {
     goods: [
+        {text: 'US Dollar', unit: '$'},
+        {text: 'Euro', unit: '\u20AC'},
+        {text: 'Japanese Yen', unit: '\uFFE5'},
+        {text: 'British Pound', unit: '\u00A3'},
+        {text: 'Chinese Yuan', unit: '\uFFE5'},
+        {text: 'Swiss Franc', unit: 'CHF'},
+        {text: 'Canadian Dollar', unit: '$'},
+        {text: 'Hong Kong Dollar', unit: '$'},
+    ],
+    description: 'The most traded and important currencies in the world. <a href="http://www.bloomberg.com/markets/currencies">[ref]</a>'
+},
+];
+
+/*
+var database = [
+{
+    goods: [
         {text: 'Money', unit: '\u20AC'},
         {text: 'Wine', unit: 'hl'},
         {text: 'Gold', unit: 'oz'},
@@ -13,6 +30,7 @@ var database = [
     description: 'You are a Roman merchant! These are a few of the most traded commodites of the ancient world. <a href="http://www.ancient.eu/article/638/">[ref]</a>'
 },
 ];
+*/
 
 /*
 {
