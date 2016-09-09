@@ -3,12 +3,29 @@
 <title>Plot Test from the Book</title>
 <link rel="stylesheet" type="text/css" href="dynplot.css">
 <style>
+body {
+    font-family: serif;
+    text-align: justify;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 600px;
+}
 .AC, .MC {stroke:black; fill:black;}
 .TC {stroke:red; fill:red;}
 </style>
 </head>
 <body>
+<h1>Chapter 9</h1>
+
+<p>So far, I have defined total cost (TC) and marginal cost (MC). There is a third kind of cost curve that we will find useful--average cost (AC). The average cost to produce any quantity of output is simply the total cost divided by the quantity; if it costs $10,000 to produce 500 widgets, then the average cost is $20/widget. Figure 9-8 combines curves from Figures 9-6a and 9-7 and adds AC, putting all three cost curves on one graph so as to make it easier to see the relations among them.</p>
+
+<p>One thing you may notice about AC on Figure 9-8 is that it goes to infinity as quantity goes to zero. Why? As quantity goes to zero, total cost does not; the firm whose cost curves we are looking at has some fixed costs. Average cost is total cost divided by quantity; as quantity goes to zero, total cost approaches FC, so TC/q goes to FC/0--infinity. Figure 9-9 shows TC, MC, and AC for the firm represented by TC2 on Figure 9-6; there are no fixed costs, and AC does not go to infinity as quantity goes to zero.</p>
+
 <div id="graph"></div>
+
+<p>Total cost, marginal cost, and average cost for a firm. Because the firm has positive fixed cost, average cost goes to infinity as quantity goes to zero. Average and marginal cost intersect at point H, which is the minimum of average cost.</p>
+
 <script src="../libs/d3.v4.min.js"></script>
 <script src="dynplot.js"></script>
 <script>
