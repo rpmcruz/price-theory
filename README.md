@@ -1,6 +1,10 @@
 # price-theory
 Economics games, inspired by David D. Friedman's
 
+<aside class="notice">
+This project is being migrated to [here.](https://github.com/price-theory/applets)
+</aside>
+
 This project is to recreate the games designed by [David D. Friedman](https://en.wikipedia.org/wiki/David_D._Friedman) and shipped with his [Price Theory textbook](http://www.daviddfriedman.com/Academic/Price_Theory/PThy_ToC.html). The original games were written [in QBASIC](http://www.daviddfriedman.com/Living_Paper/living_paper.htm) and no longer run in modern computers.
 
 The games are not meant to be played for long, but to be complimentary and to motivate textbook use.
